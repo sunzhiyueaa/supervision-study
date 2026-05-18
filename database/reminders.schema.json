@@ -1,0 +1,60 @@
+{
+  "collection": "reminders",
+  "description": "提醒记录集合 - 存储订阅消息发送记录",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "openid": {
+      "type": "string",
+      "required": true,
+      "description": "所属用户的openid"
+    },
+    "date": {
+      "type": "string",
+      "required": true,
+      "description": "提醒日期，格式 YYYY-MM-DD"
+    },
+    "level": {
+      "type": "number",
+      "required": true,
+      "description": "提醒级别：0=首次，1=超过1小时，2=超过2小时"
+    },
+    "templateId": {
+      "type": "string",
+      "required": false,
+      "description": "订阅消息模板ID"
+    },
+    "message": {
+      "type": "string",
+      "required": false,
+      "description": "发送的提醒内容"
+    },
+    "sentAt": {
+      "type": "date",
+      "required": false,
+      "description": "发送时间"
+    },
+    "failed": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "是否发送失败"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "openid_date_level",
+      "fields": ["openid", "date", "level"],
+      "unique": false,
+      "description": "按用户、日期和级别查询提醒记录，防止重复发送"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "collection": "users",
+  "description": "用户信息集合 - 统一界面，不分角色",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "openid": {
+      "type": "string",
+      "required": true,
+      "description": "微信用户唯一标识，由云函数自动获取"
+    },
+    "nickname": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "用户昵称"
+    },
+    "avatar": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "用户头像URL"
+    },
+    "totalPoints": {
+      "type": "number",
+      "required": false,
+      "default": 0,
+      "description": "累计积分"
+    },
+    "reminderTime": {
+      "type": "string",
+      "required": false,
+      "default": "20:00",
+      "description": "每日提醒时间，格式 HH:mm"
+    },
+    "reminderEnabled": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "是否开启每日提醒"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间，使用 db.serverDate()"
+    }
+  },
+  "indexes": [
+    {
+      "name": "openid_index",
+      "fields": ["openid"],
+      "unique": true,
+      "description": "openid唯一索引，用于快速查询用户"
+    }
+  ]
+}

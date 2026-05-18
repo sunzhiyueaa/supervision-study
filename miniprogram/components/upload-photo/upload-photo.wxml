@@ -1,0 +1,17 @@
+<!-- components/upload-photo/upload-photo.wxml - 照片上传组件（多图网格） -->
+<view class="upload-wrap">
+  <view class="image-grid">
+    <!-- 已选图片 -->
+    <view class="image-item" wx:for="{{innerImages}}" wx:key="*this">
+      <image class="image-thumb" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-src="{{item}}"></image>
+      <view class="delete-btn" catchtap="deleteImage" data-index="{{index}}">
+        <text class="delete-icon">×</text>
+      </view>
+    </view>
+    <!-- 添加按钮 -->
+    <view class="image-item add-btn" wx:if="{{innerImages.length < maxCount}}" bindtap="chooseImage">
+      <text class="add-icon">+</text>
+      <text class="add-text">添加照片</text>
+    </view>
+  </view>
+</view>

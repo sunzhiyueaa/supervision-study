@@ -1,0 +1,107 @@
+<!-- pages/checkin/index.wxml - 练字打卡页 -->
+<view class="container">
+  <!-- 顶部状态 -->
+  <view class="checkin-header card anim-slide-up">
+    <text class="checkin-date">{{todayDate}}</text>
+    <text class="checkin-status {{checkedIn ? 'done' : 'pending'}}">
+      {{checkedIn ? '今日已打卡' : '今日未打卡'}}
+    </text>
+  </view>
+
+  <!-- 未打卡：上传照片区域 -->
+  <view class="upload-section card anim-slide-up" style="animation-delay: 0.1s;" wx:if="{{!checkedIn}}">
+    <text class="section-title">上传练字照片</text>
+    <text class="text-hint">最多选择3张照片，拍照或从相册选取</text>
+
+    <!-- 使用上传组件 -->
+    <upload-photo
+      maxCount="{{3}}"
+      images="{{imageList}}"
+      bind:add="onAddImage"
+      bind:delete="onDeleteImage"
+    ></upload-photo>
+
+    <!-- 上传进度 -->
+    <view class="progress-wrap" wx:if="{{uploading}}">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{uploadProgress}}%"></view>
+      </view>
+      <text class="progress-text">上传中 {{uploadProgress}}%</text>
+    </view>
+
+    <!-- 提交按钮 -->
+    <button
+      class="btn-primary submit-btn"
+      bindtap="submitCheckin"
+      disabled="{{imageList.length === 0 || uploading}}"
+      loading="{{uploading}}"
+    >
+      {{uploading ? '上传中...' : '提交打卡'}}
+    </button>
+  </view>
+
+  <!-- 已打卡：显示打卡内容 -->
+  <view class="checked-content anim-fade-in" wx:if="{{checkedIn}}">
+    <view class="card">
+      <view class="checked-title-wrap flex-between">
+        <text class="section-title">今日练字</text>
+        <text class="checkin-done-tag">已完成</text>
+      </view>
+
+      <!-- 图片列表 -->
+      <view class="checked-images" wx:if="{{cloudImages.length > 0}}">
+        <image
+          class="checked-photo"
+          wx:for="{{cloudImages}}"
+          wx:key="*this"
+          src="{{item}}"
+          mode="aspectFit"
+          bindtap="previewImage"
+          data-src="{{item}}"
+        ></image>
+      </view>
+
+      <!-- 评分信息 -->
+      <view class="score-info flex-between" wx:if="{{record.score}}">
+        <text class="score-label">字体评分</text>
+        <text class="score-value">{{record.score}} 分</text>
+      </view>
+      <view class="points-info flex-between" wx:if="{{record.earnedPoints}}">
+        <text class="points-label">获得积分</text>
+        <text class="points-value">+{{record.earnedPoints}} 分</text>
+      </view>
+
+      <!-- 获取评分按钮（如果还没评分） -->
+      <button
+        class="btn-secondary score-btn"
+        bindtap="getScore"
+        wx:if="{{!record.score}}"
+      >
+        获取评分
+      </button>
+
+      <!-- 已评分结果 -->
+      <view class="score-result anim-scale-in" wx:if="{{scoreInfo}}">
+        <view class="score-card flex-center">
+          <text class="score-num">{{scoreInfo.score}}</text>
+          <text class="score-unit">分</text>
+        </view>
+        <text class="score-comment" wx:if="{{scoreInfo.comment}}">{{scoreInfo.comment}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 打卡成功 confetti 动画 -->
+  <view class="confetti-container" wx:if="{{showConfetti}}">
+    <view class="confetti-piece confetti-1"></view>
+    <view class="confetti-piece confetti-2"></view>
+    <view class="confetti-piece confetti-3"></view>
+    <view class="confetti-piece confetti-4"></view>
+    <view class="confetti-piece confetti-5"></view>
+    <view class="confetti-piece confetti-6"></view>
+    <view class="confetti-center">
+      <text class="confetti-emoji">🎉</text>
+      <text class="confetti-text">打卡成功！</text>
+    </view>
+  </view>
+</view>

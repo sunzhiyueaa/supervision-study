@@ -1,0 +1,38 @@
+<!-- pages/copybook/gallery/index.wxml - 已生成字帖 -->
+<view class="container">
+  <!-- 字帖网格 -->
+  <view class="gallery-grid" wx:if="{{copybooks.length > 0}}">
+    <view class="gallery-item card anim-stagger" wx:for="{{copybooks}}" wx:key="_id"
+          style="animation-delay: {{index * 0.06}}s;"
+          bindtap="previewCopybook" data-item="{{item}}"
+          bindlongpress="onLongPress" data-item="{{item}}">
+      <view class="gallery-preview">
+        <text class="preview-text">{{item.previewText}}</text>
+      </view>
+      <view class="gallery-info">
+        <text class="gallery-title">{{item.previewText}}</text>
+        <view class="gallery-tags">
+          <text class="gallery-tag">{{item.fontStyleLabel}}</text>
+          <text class="gallery-tag">{{item.gridTypeLabel}}</text>
+        </view>
+        <text class="gallery-date">{{item.dateStr}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-state" wx:if="{{loading && copybooks.length === 0}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && copybooks.length === 0}}">
+    <text class="empty-icon">📚</text>
+    <text class="empty-text">暂无收藏字帖</text>
+    <text class="empty-hint">去字帖素材页选择文章生成吧</text>
+    <view class="empty-btn" bindtap="goToArticles">
+      <text class="empty-btn-text">去生成字帖</text>
+    </view>
+  </view>
+</view>

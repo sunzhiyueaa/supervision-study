@@ -1,0 +1,114 @@
+<!-- pages/index/index.wxml - 首页（今日任务+打卡入口+简要统计） -->
+<view class="container">
+  <!-- 订阅消息引导条 -->
+  <view class="subscribe-banner anim-slide-down" wx:if="{{showSubscribeTip}}">
+    <view class="subscribe-banner-content" bindtap="enableReminder">
+      <text class="subscribe-banner-icon">🔔</text>
+      <view class="subscribe-banner-text">
+        <text class="subscribe-banner-title">开启每日练字提醒</text>
+        <text class="subscribe-banner-desc">每天定时提醒你坚持练字</text>
+      </view>
+      <text class="subscribe-banner-action">开启</text>
+    </view>
+    <text class="subscribe-banner-close" bindtap="dismissSubscribeTip">✕</text>
+  </view>
+
+  <!-- 顶部：日期和连续打卡（渐变背景） -->
+  <view class="header-card card anim-slide-up">
+    <view class="header-bg-decor"></view>
+    <view class="header-top flex-between">
+      <view class="date-wrap">
+        <text class="greeting-text">{{greetingText}}</text>
+        <text class="date-text">{{todayDate}}</text>
+        <text class="weekday-text">{{todayWeekday}}</text>
+      </view>
+      <view class="streak-wrap">
+        <text class="streak-num">{{streakDays}}</text>
+        <text class="streak-label">天连续打卡</text>
+      </view>
+    </view>
+    <!-- 鼓励文字 -->
+    <view class="encourage-bar" wx:if="{{!todayCheckedIn}}">
+      <text class="encourage-text">今天还没打卡，坚持就是胜利！</text>
+    </view>
+  </view>
+
+  <!-- 今日任务 -->
+  <view class="section-title mt-30 anim-slide-up" style="animation-delay: 0.1s;">今日任务</view>
+
+  <!-- 练字打卡卡片 -->
+  <view class="task-card card anim-slide-up" style="animation-delay: 0.15s;" bindtap="goToCheckin">
+    <view class="task-left">
+      <view class="task-icon bg-green">
+        <text class="task-icon-text">字</text>
+      </view>
+      <view class="task-info">
+        <text class="task-name">练字打卡</text>
+        <text class="task-desc">上传今日练字照片</text>
+      </view>
+    </view>
+    <view class="task-status {{todayCheckedIn ? 'done' : 'pending'}}">
+      <view class="task-checkmark" wx:if="{{todayCheckedIn}}">✓</view>
+      <text>{{todayCheckedIn ? '已完成' : '去打卡'}}</text>
+    </view>
+  </view>
+
+  <!-- 错题本卡片 -->
+  <view class="task-card card anim-slide-up" style="animation-delay: 0.2s;" bindtap="goToMistakes">
+    <view class="task-left">
+      <view class="task-icon bg-orange">
+        <text class="task-icon-text">错</text>
+      </view>
+      <view class="task-info">
+        <text class="task-name">错题本</text>
+        <text class="task-desc">{{todayMistakeCount > 0 ? '今日已记录' + todayMistakeCount + '题' : '记录今日错题'}}</text>
+      </view>
+    </view>
+    <view class="task-status {{todayMistakeCount > 0 ? 'done' : 'pending'}}">
+      <view class="task-checkmark" wx:if="{{todayMistakeCount > 0}}">✓</view>
+      <text>{{todayMistakeCount > 0 ? '已记录' : '去记录'}}</text>
+    </view>
+  </view>
+
+  <!-- 本周完成情况 -->
+  <view class="section-title mt-30 anim-slide-up" style="animation-delay: 0.25s;">本周完成情况</view>
+  <view class="week-bar card anim-slide-up" style="animation-delay: 0.3s;">
+    <view class="week-item" wx:for="{{weekDays}}" wx:key="day">
+      <text class="week-label {{item.checkedIn ? 'week-label-active' : ''}}">{{item.label}}</text>
+      <view class="week-dot-wrap">
+        <view class="week-dot {{item.checkedIn ? 'active' : ''}}"></view>
+        <view class="week-dot-ring" wx:if="{{item.checkedIn}}"></view>
+      </view>
+      <text class="week-date">{{item.dateStr}}</text>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="section-title mt-30 anim-slide-up" style="animation-delay: 0.35s;">快捷功能</view>
+  <view class="shortcut-grid anim-slide-up" style="animation-delay: 0.4s;">
+    <view class="shortcut-item" bindtap="goToArticles">
+      <view class="shortcut-icon bg-blue">
+        <text class="shortcut-icon-text">帖</text>
+      </view>
+      <text class="shortcut-label">字帖素材</text>
+    </view>
+    <view class="shortcut-item" bindtap="goToGallery">
+      <view class="shortcut-icon bg-purple">
+        <text class="shortcut-icon-text">库</text>
+      </view>
+      <text class="shortcut-label">我的字帖</text>
+    </view>
+    <view class="shortcut-item" bindtap="goToRewards">
+      <view class="shortcut-icon bg-red">
+        <text class="shortcut-icon-text">奖</text>
+      </view>
+      <text class="shortcut-label">积分奖励</text>
+    </view>
+    <view class="shortcut-item" bindtap="goToSettings">
+      <view class="shortcut-icon bg-gray">
+        <text class="shortcut-icon-text">设</text>
+      </view>
+      <text class="shortcut-label">设置</text>
+    </view>
+  </view>
+</view>

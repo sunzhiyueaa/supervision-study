@@ -1,0 +1,96 @@
+<!-- pages/settings/index.wxml - 设置页 -->
+<view class="container">
+  <!-- 提醒设置 -->
+  <view class="card">
+    <text class="section-title">练字提醒</text>
+
+    <!-- 开启提醒 -->
+    <view class="setting-row flex-between">
+      <view class="setting-left">
+        <text class="setting-label">每日提醒</text>
+        <text class="setting-hint">开启后每天定时提醒你练字</text>
+      </view>
+      <switch checked="{{reminderEnabled}}" bindchange="toggleReminder" color="#07c160" />
+    </view>
+
+    <!-- 提醒时间 -->
+    <view class="setting-row flex-between" wx:if="{{reminderEnabled}}">
+      <view class="setting-left">
+        <text class="setting-label">提醒时间</text>
+        <text class="setting-hint">超过此时间未打卡将发送提醒</text>
+      </view>
+      <picker mode="time" value="{{reminderTime}}" bindchange="onTimeChange">
+        <view class="time-picker">
+          <text class="time-value">{{reminderTime}}</text>
+          <text class="time-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 订阅消息 -->
+    <view class="setting-row flex-between" wx:if="{{reminderEnabled}}">
+      <view class="setting-left">
+        <text class="setting-label">订阅提醒消息</text>
+        <text class="setting-hint">需要授权才能接收提醒推送</text>
+      </view>
+      <view class="subscribe-btn" bindtap="subscribeReminder">
+        <text class="subscribe-text">去订阅</text>
+      </view>
+    </view>
+
+    <!-- 提醒规则说明 -->
+    <view class="reminder-rules" wx:if="{{reminderEnabled}}">
+      <text class="rules-title">提醒规则</text>
+      <text class="rules-item">· 设定时间未打卡：发送第1次提醒</text>
+      <text class="rules-item">· 超过1小时仍未完成：发送第2次提醒</text>
+      <text class="rules-item">· 超过2小时仍未完成：发送第3次提醒</text>
+    </view>
+  </view>
+
+  <!-- 个人信息 -->
+  <view class="card mt-20">
+    <text class="section-title">个人信息</text>
+    <view class="setting-row flex-between">
+      <text class="setting-label">昵称</text>
+      <text class="setting-value">{{userInfo.nickname || '未设置'}}</text>
+    </view>
+    <view class="setting-row" bindtap="editNickname">
+      <text class="setting-label">修改昵称</text>
+    </view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="card mt-20">
+    <text class="section-title">数据统计</text>
+    <view class="stats-grid">
+      <view class="stats-item">
+        <text class="stats-num">{{totalCheckins}}</text>
+        <text class="stats-label">累计打卡天数</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-num">{{totalPoints}}</text>
+        <text class="stats-label">累计积分</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-num">{{registerDays}}</text>
+        <text class="stats-label">注册天数</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="save-wrap mt-20">
+    <button class="btn-primary save-btn" bindtap="saveSettings" loading="{{saving}}" disabled="{{saving}}">
+      保存设置
+    </button>
+  </view>
+
+  <!-- 关于 -->
+  <view class="card mt-20">
+    <text class="section-title">关于</text>
+    <view class="setting-row flex-between">
+      <text class="setting-label">版本</text>
+      <text class="setting-value">1.0.0</text>
+    </view>
+  </view>
+</view>

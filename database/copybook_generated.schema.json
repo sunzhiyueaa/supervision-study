@@ -1,0 +1,68 @@
+{
+  "collection": "copybook_generated",
+  "description": "已生成字帖集合 - 存储用户生成并保存的字帖",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "openid": {
+      "type": "string",
+      "required": true,
+      "description": "所属用户的openid"
+    },
+    "articleId": {
+      "type": "string",
+      "required": false,
+      "description": "关联的文章素材ID"
+    },
+    "text": {
+      "type": "string",
+      "required": true,
+      "description": "练字文本内容"
+    },
+    "fontStyle": {
+      "type": "string",
+      "required": false,
+      "default": "楷体",
+      "description": "字体风格：楷体 | 行楷"
+    },
+    "gridType": {
+      "type": "string",
+      "required": false,
+      "default": "田字格",
+      "description": "格子类型：田字格 | 米字格 | 方格 | 横线"
+    },
+    "fontSize": {
+      "type": "string",
+      "required": false,
+      "default": "medium",
+      "description": "字号：small | medium | large"
+    },
+    "columns": {
+      "type": "number",
+      "required": false,
+      "default": 8,
+      "description": "每行字数"
+    },
+    "charCount": {
+      "type": "number",
+      "required": false,
+      "description": "字符数"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "openid_createdAt",
+      "fields": ["openid", "createdAt"],
+      "unique": false,
+      "description": "按用户和时间查询已生成字帖"
+    }
+  ]
+}

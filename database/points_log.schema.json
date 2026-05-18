@@ -1,0 +1,44 @@
+{
+  "collection": "points_log",
+  "description": "积分日志集合 - 记录所有积分变动",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "openid": {
+      "type": "string",
+      "required": true,
+      "description": "所属用户的openid"
+    },
+    "points": {
+      "type": "number",
+      "required": true,
+      "description": "积分变动值，正数为获得，负数为扣除"
+    },
+    "description": {
+      "type": "string",
+      "required": true,
+      "description": "积分变动描述，如'练字打卡'、'记录错题'、'连续打卡7天奖励'"
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "description": "积分类型：checkin | mistake | mistake_delete | streak_bonus | streak_bonus_30 | copybook | score_bonus | other"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "openid_createdAt",
+      "fields": ["openid", "createdAt"],
+      "unique": false,
+      "description": "按用户和时间查询积分记录"
+    }
+  ]
+}

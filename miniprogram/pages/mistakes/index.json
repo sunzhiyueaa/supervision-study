@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "upload-photo": "/components/upload-photo/upload-photo"
+  },
+  "navigationBarTitleText": "错题本"
+}

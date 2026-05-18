@@ -1,0 +1,233 @@
+/* pages/checkin/index.wxss - 练字打卡页样式 */
+
+/* ========== 顶部状态 ========== */
+.checkin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkin-date {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.checkin-status {
+  font-size: 24rpx;
+  padding: 6rpx 20rpx;
+  border-radius: 20rpx;
+  transition: all 0.3s ease;
+}
+
+.checkin-status.done {
+  color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.checkin-status.pending {
+  color: var(--accent-color);
+  background: rgba(255, 152, 0, 0.1);
+}
+
+/* ========== 上传区域 ========== */
+.upload-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== 上传进度 ========== */
+.progress-wrap {
+  margin-top: 20rpx;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12rpx;
+  background: #e0e0e0;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary-light), var(--primary-color));
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-top: 8rpx;
+  text-align: center;
+  display: block;
+}
+
+/* ========== 提交按钮 ========== */
+.submit-btn {
+  margin-top: 30rpx;
+  width: 100%;
+}
+
+/* ========== 已打卡内容 ========== */
+.checked-title-wrap {
+  margin-bottom: 16rpx;
+}
+
+.checkin-done-tag {
+  font-size: 22rpx;
+  color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.1);
+  padding: 4rpx 16rpx;
+  border-radius: 16rpx;
+}
+
+.checked-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.checked-photo {
+  width: 100%;
+  height: 400rpx;
+  border-radius: 12rpx;
+  background: #f8f8f8;
+}
+
+.score-info,
+.points-info {
+  padding: 12rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.score-label,
+.points-label {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+
+.score-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.points-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+/* ========== 评分按钮 ========== */
+.score-btn {
+  margin-top: 20rpx;
+  width: 100%;
+}
+
+/* ========== 评分结果 ========== */
+.score-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 0;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 16rpx;
+}
+
+.score-card {
+  margin-bottom: 8rpx;
+}
+
+.score-num {
+  font-size: 72rpx;
+  font-weight: 700;
+  color: var(--primary-color);
+  animation: countUp 0.6s ease both;
+}
+
+.score-unit {
+  font-size: 28rpx;
+  color: var(--text-hint);
+  margin-left: 4rpx;
+}
+
+.score-comment {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ========== Confetti 庆祝动画 ========== */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 4rpx;
+}
+
+.confetti-1 {
+  background: #07c160;
+  animation: confetti1 1.5s ease-out forwards;
+}
+
+.confetti-2 {
+  background: #FF9800;
+  animation: confetti2 1.5s ease-out forwards;
+}
+
+.confetti-3 {
+  background: #2196F3;
+  animation: confetti3 1.5s ease-out forwards;
+}
+
+.confetti-4 {
+  background: #f44336;
+  animation: confetti4 1.5s ease-out forwards;
+}
+
+.confetti-5 {
+  background: #9C27B0;
+  animation: confetti5 1.5s ease-out forwards;
+}
+
+.confetti-6 {
+  background: #FFD600;
+  animation: confetti6 1.5s ease-out forwards;
+}
+
+.confetti-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: scaleIn 0.5s ease both;
+}
+
+.confetti-emoji {
+  font-size: 80rpx;
+  margin-bottom: 12rpx;
+}
+
+.confetti-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}

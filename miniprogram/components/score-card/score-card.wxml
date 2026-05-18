@@ -1,0 +1,70 @@
+<!-- components/score-card/score-card.wxml - 评分卡片组件 -->
+<view class="score-card-wrap">
+  <!-- 圆环进度条 -->
+  <view class="score-ring-container">
+    <svg class="score-ring-svg" viewBox="0 0 140 140">
+      <!-- 背景圆环 -->
+      <circle cx="70" cy="70" r="{{circleRadius}}" 
+              fill="none" stroke="#e8e8e8" stroke-width="{{circleStroke}}" />
+      <!-- 进度圆环 -->
+      <circle cx="70" cy="70" r="{{circleRadius}}" 
+              fill="none" stroke="{{scoreColor}}" stroke-width="{{circleStroke}}"
+              stroke-linecap="round"
+              stroke-dasharray="{{dashArray}}"
+              stroke-dashoffset="{{dashOffset}}"
+              transform="rotate(-90 70 70)" />
+    </svg>
+    <view class="score-ring-text">
+      <text class="score-number">{{score}}</text>
+      <text class="score-unit">分</text>
+    </view>
+  </view>
+
+  <!-- 评语 -->
+  <text class="score-comment" wx:if="{{comment}}">{{comment}}</text>
+
+  <!-- 各项分数进度条 -->
+  <view class="breakdown-section">
+    <!-- 识别置信度 -->
+    <view class="breakdown-item">
+      <view class="breakdown-header">
+        <text class="breakdown-label">识别置信度</text>
+        <text class="breakdown-value">{{breakdown.confidence || 0}}/40</text>
+      </view>
+      <view class="breakdown-bar">
+        <view class="breakdown-fill confidence-fill" style="width: {{confidencePercent}}%"></view>
+      </view>
+    </view>
+    <!-- 字数量 -->
+    <view class="breakdown-item">
+      <view class="breakdown-header">
+        <text class="breakdown-label">字数量</text>
+        <text class="breakdown-value">{{breakdown.quantity || 0}}/20</text>
+      </view>
+      <view class="breakdown-bar">
+        <view class="breakdown-fill quantity-fill" style="width: {{quantityPercent}}%"></view>
+      </view>
+    </view>
+    <!-- 工整度 -->
+    <view class="breakdown-item">
+      <view class="breakdown-header">
+        <text class="breakdown-label">工整度</text>
+        <text class="breakdown-value">{{breakdown.neatness || 0}}/40</text>
+      </view>
+      <view class="breakdown-bar">
+        <view class="breakdown-fill neatness-fill" style="width: {{neatnessPercent}}%"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- OCR识别文字（可展开） -->
+  <view class="ocr-section" wx:if="{{ocrText}}">
+    <view class="ocr-toggle" bindtap="toggleOcrText">
+      <text class="ocr-toggle-text">识别文字</text>
+      <text class="ocr-toggle-arrow">{{showOcrText ? '收起' : '展开'}}</text>
+    </view>
+    <view class="ocr-content" wx:if="{{showOcrText}}">
+      <text class="ocr-text">{{ocrText}}</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,95 @@
+<!-- pages/copybook/generate/index.wxml - 字帖生成 -->
+<view class="container">
+  <!-- 文本内容编辑 -->
+  <view class="card">
+    <view class="section-header">
+      <text class="section-title">练字内容</text>
+      <text class="source-label" wx:if="{{sourceName}}">{{sourceName}}</text>
+    </view>
+    <textarea class="text-editor" value="{{text}}" bindinput="onTextInput" 
+              placeholder="请输入要练字的内容" maxlength="200" auto-height />
+    <view class="text-counter">
+      <text class="counter-text">{{text.length}}/200</text>
+    </view>
+  </view>
+
+  <!-- 配置选项 -->
+  <view class="card mt-20">
+    <text class="section-title">字帖设置</text>
+
+    <!-- 字体样式 -->
+    <view class="option-row">
+      <text class="option-label">字体样式</text>
+      <view class="radio-group">
+        <view class="radio-item {{fontStyle === item ? 'active' : ''}}" 
+              wx:for="{{fontStyles}}" wx:key="*this"
+              bindtap="onFontStyleChange" data-value="{{index}}">
+          <text class="radio-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 格子类型 -->
+    <view class="option-row">
+      <text class="option-label">格子类型</text>
+      <view class="grid-type-group">
+        <view class="grid-type-item {{gridType === item ? 'active' : ''}}" 
+              wx:for="{{gridTypes}}" wx:key="*this"
+              bindtap="onGridTypeSelect" data-type="{{item}}">
+          <view class="grid-icon grid-icon-{{index}}">
+            <view class="grid-icon-inner"></view>
+          </view>
+          <text class="grid-type-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 字号选择 -->
+    <view class="option-row">
+      <text class="option-label">字号大小</text>
+      <view class="size-group">
+        <view class="size-item {{fontSizeIndex === index ? 'active' : ''}}" 
+              wx:for="{{fontSizeLabels}}" wx:key="*this"
+              bindtap="onFontSizeSelect" data-index="{{index}}">
+          <text class="size-text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 每行字数 -->
+    <view class="option-row">
+      <text class="option-label">每行字数</text>
+      <view class="size-group">
+        <view class="size-item {{columnsIndex === index ? 'active' : ''}}" 
+              wx:for="{{columnsOptions}}" wx:key="*this"
+              bindtap="onColumnsSelect" data-index="{{index}}">
+          <text class="size-text">{{item}}字</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 预览区域 -->
+  <view class="card mt-20">
+    <text class="section-title">字帖预览</text>
+    <view class="preview-wrapper">
+      <canvas type="2d" id="copybookCanvas" class="copybook-canvas"
+              style="width: 100%; height: 600rpx;"></canvas>
+      <view class="preview-empty" wx:if="{{!text}}">
+        <text class="preview-empty-text">输入内容后实时预览</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="btn-group mt-20">
+    <button class="btn-primary action-btn" bindtap="generateAndSave" 
+            loading="{{saving}}" disabled="{{!text}}">
+      生成并保存到相册
+    </button>
+    <button class="btn-secondary action-btn mt-20" bindtap="addToFavorite" 
+            loading="{{generating}}" disabled="{{!text}}">
+      添加到收藏
+    </button>
+  </view>
+</view>

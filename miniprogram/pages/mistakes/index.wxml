@@ -1,0 +1,216 @@
+<!-- pages/mistakes/index.wxml - 错题本记录页 -->
+<view class="container">
+  <!-- 统计栏 -->
+  <view class="stats-bar card">
+    <view class="stat-item">
+      <text class="stat-num">{{stats.todayCount}}</text>
+      <text class="stat-label">今日</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{stats.weekCount}}</text>
+      <text class="stat-label">本周</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num">{{stats.monthCount}}</text>
+      <text class="stat-label">本月</text>
+    </view>
+  </view>
+
+  <!-- 科目筛选栏（横向滚动） -->
+  <scroll-view class="subject-filter" scroll-x="true" enhanced="true">
+    <view class="subject-filter-inner">
+      <view
+        class="subject-tag {{currentSubject === item ? 'active' : ''}}"
+        wx:for="{{subjects}}"
+        wx:key="*this"
+        bindtap="onSubjectFilter"
+        data-subject="{{item}}"
+      >
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 日期筛选 -->
+  <view class="date-filter card">
+    <view class="date-filter-inner flex-row">
+      <text class="filter-label">日期：</text>
+      <picker mode="date" value="{{filterDate}}" bindchange="onDateChange">
+        <text class="filter-date">{{filterDate}}</text>
+      </picker>
+      <text class="filter-clear" bindtap="clearDateFilter" wx:if="{{filterDate}}">重置今日</text>
+    </view>
+  </view>
+
+  <!-- 错题列表 -->
+  <view class="mistake-list">
+    <view class="mistake-item card anim-stagger" wx:for="{{mistakes}}" wx:key="_id" bindtap="viewDetail" data-id="{{item._id}}"
+          style="animation-delay: {{index * 0.05}}s;">
+      <view class="mistake-header flex-between">
+        <text class="mistake-subject">{{item.subject}}</text>
+        <text class="mistake-time">{{item.dateStr}} {{item.timeStr}}</text>
+      </view>
+      <!-- 缩略图 + 描述 -->
+      <view class="mistake-body flex-row">
+        <image
+          class="mistake-thumb"
+          wx:if="{{item.images.length > 0}}"
+          src="{{item.images[0]}}"
+          mode="aspectFill"
+          catchtap="previewImage"
+          data-src="{{item.images[0]}}"
+          data-urls="{{item.images}}"
+        ></image>
+        <view class="mistake-text flex-1">
+          <text class="mistake-desc">{{item.description || '无描述'}}</text>
+          <text class="mistake-error" wx:if="{{item.errorType}}">错误原因：{{item.errorType}}</text>
+        </view>
+      </view>
+      <!-- 操作区 -->
+      <view class="mistake-footer">
+        <text class="action-btn delete" catchtap="deleteMistake" data-id="{{item._id}}">删除</text>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{mistakes.length === 0 && !loading}}">
+      <text class="empty-text">暂无错题记录</text>
+      <text class="empty-hint">点击下方按钮添加错题</text>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+
+  <!-- 浮动添加按钮 -->
+  <view class="fab-btn" bindtap="addMistake">
+    <text class="fab-icon">+</text>
+  </view>
+</view>
+
+<!-- 添加错题弹窗 -->
+<view class="modal-mask" wx:if="{{showAddModal}}" bindtap="closeModal"></view>
+<view class="modal-content" wx:if="{{showAddModal}}">
+  <text class="modal-title">添加错题</text>
+
+  <!-- 科目选择 -->
+  <view class="form-item" bindtap="openSubjectPicker">
+    <text class="form-label">科目</text>
+    <view class="form-value">
+      <text class="{{newMistake.subject ? '' : 'placeholder'}}">{{newMistake.subject || '请选择科目'}}</text>
+    </view>
+  </view>
+
+  <!-- 错误原因 -->
+  <view class="form-item" bindtap="openErrorPicker">
+    <text class="form-label">错误原因</text>
+    <view class="form-value">
+      <text class="{{newMistake.errorType ? '' : 'placeholder'}}">{{newMistake.errorType || '请选择错误原因'}}</text>
+    </view>
+  </view>
+
+  <!-- 文字描述 -->
+  <view class="form-item-textarea">
+    <text class="form-label">描述（可选）</text>
+    <textarea
+      class="modal-textarea"
+      placeholder="描述错题内容..."
+      bindinput="onDescInput"
+      value="{{newMistake.description}}"
+      maxlength="500"
+    ></textarea>
+  </view>
+
+  <!-- 拍照上传 -->
+  <view class="form-item-upload">
+    <text class="form-label">拍照上传（可选）</text>
+    <upload-photo
+      maxCount="{{3}}"
+      images="{{newMistake.imageList}}"
+      bind:add="onAddImage"
+      bind:delete="onDeleteImage"
+    ></upload-photo>
+  </view>
+
+  <view class="modal-btns">
+    <button class="btn-secondary" bindtap="closeModal">取消</button>
+    <button class="btn-primary" bindtap="saveMistake">保存</button>
+  </view>
+</view>
+
+<!-- 科目选择弹窗 -->
+<view class="modal-mask" wx:if="{{showSubjectPicker}}" bindtap="closeSubjectPicker"></view>
+<view class="picker-modal" wx:if="{{showSubjectPicker}}">
+  <text class="picker-title">选择科目</text>
+  <view class="picker-grid">
+    <view
+      class="picker-item {{newMistake.subject === item ? 'active' : ''}}"
+      wx:for="{{subjects}}"
+      wx:key="*this"
+      wx:if="{{item !== '全部'}}"
+      bindtap="onPickSubject"
+      data-subject="{{item}}"
+    >
+      <text>{{item}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 错误类型选择弹窗 -->
+<view class="modal-mask" wx:if="{{showErrorPicker}}" bindtap="closeErrorPicker"></view>
+<view class="picker-modal" wx:if="{{showErrorPicker}}">
+  <text class="picker-title">选择错误原因</text>
+  <view class="picker-grid">
+    <view
+      class="picker-item {{newMistake.errorType === item ? 'active' : ''}}"
+      wx:for="{{errorTypes}}"
+      wx:key="*this"
+      bindtap="onPickError"
+      data-error="{{item}}"
+    >
+      <text>{{item}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 详情弹窗 -->
+<view class="modal-mask" wx:if="{{showDetailModal}}" bindtap="closeDetail"></view>
+<view class="detail-modal" wx:if="{{showDetailModal && detailMistake}}">
+  <view class="detail-header flex-between">
+    <text class="detail-subject">{{detailMistake.subject}}</text>
+    <text class="detail-close" bindtap="closeDetail">×</text>
+  </view>
+  <view class="detail-body">
+    <!-- 图片 -->
+    <view class="detail-images" wx:if="{{detailMistake.images.length > 0}}">
+      <image
+        class="detail-img"
+        wx:for="{{detailMistake.images}}"
+        wx:key="*this"
+        src="{{item}}"
+        mode="aspectFit"
+        bindtap="previewImage"
+        data-src="{{item}}"
+        data-urls="{{detailMistake.images}}"
+      ></image>
+    </view>
+    <!-- 描述 -->
+    <view class="detail-desc" wx:if="{{detailMistake.description}}">
+      <text class="detail-desc-text">{{detailMistake.description}}</text>
+    </view>
+    <!-- 错误原因 -->
+    <view class="detail-error" wx:if="{{detailMistake.errorType}}">
+      <text class="detail-error-label">错误原因：</text>
+      <text class="detail-error-value">{{detailMistake.errorType}}</text>
+    </view>
+    <!-- 时间 -->
+    <text class="detail-time">{{detailMistake.dateStr}} {{detailMistake.timeStr}}</text>
+  </view>
+  <view class="detail-footer">
+    <button class="btn-secondary detail-delete" bindtap="deleteMistake" data-id="{{detailMistake._id}}">删除此错题</button>
+  </view>
+</view>

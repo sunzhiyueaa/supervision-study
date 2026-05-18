@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "calendar": "../../components/calendar/calendar",
+    "score-card": "../../components/score-card/score-card"
+  },
+  "navigationBarTitleText": "日历记录"
+}

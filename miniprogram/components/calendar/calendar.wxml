@@ -1,0 +1,31 @@
+<!-- components/calendar/calendar.wxml - 日历组件 -->
+<view class="calendar-wrap">
+  <!-- 月份标题和切换 -->
+  <view class="calendar-header flex-between">
+    <view class="nav-btn" bindtap="prevMonth">
+      <text class="nav-arrow">‹</text>
+    </view>
+    <text class="month-title">{{currentMonth}}</text>
+    <view class="nav-btn" bindtap="nextMonth">
+      <text class="nav-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 星期头部 -->
+  <view class="weekday-row">
+    <text class="weekday-item" wx:for="{{weekLabels}}" wx:key="*this">{{item}}</text>
+  </view>
+
+  <!-- 日期网格 -->
+  <view class="date-grid">
+    <view class="date-item {{item.isCurrentMonth ? '' : 'other-month'}} {{item.isToday ? 'today' : ''}} {{item.status === 'completed' ? 'status-completed' : ''}} {{item.status === 'missed' ? 'status-missed' : ''}}"
+          wx:for="{{dateGrid}}" wx:key="dateStr"
+          bindtap="onDateTap" data-date="{{item.dateStr}}">
+      <text class="date-num">{{item.day}}</text>
+      <!-- 已完成：绿色圆点 -->
+      <view class="status-dot dot-completed" wx:if="{{item.status === 'completed'}}"></view>
+      <!-- 未完成：红色圆点 -->
+      <view class="status-dot dot-missed" wx:if="{{item.status === 'missed'}}"></view>
+    </view>
+  </view>
+</view>

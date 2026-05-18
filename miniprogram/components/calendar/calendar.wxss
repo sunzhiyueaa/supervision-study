@@ -1,0 +1,134 @@
+/* components/calendar/calendar.wxss */
+.calendar-wrap {
+  padding: 20rpx;
+}
+
+.calendar-header {
+  margin-bottom: 20rpx;
+  padding: 0 10rpx;
+}
+
+.nav-btn {
+  padding: 10rpx 20rpx;
+  border-radius: 12rpx;
+  transition: background 0.2s ease;
+}
+
+.nav-btn:active {
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.nav-arrow {
+  font-size: 44rpx;
+  color: var(--primary-color, #07c160);
+  font-weight: 300;
+}
+
+.month-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+}
+
+/* ========== 星期行 ========== */
+.weekday-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 12rpx;
+}
+
+.weekday-item {
+  width: 14.28%;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-hint, #999);
+  font-weight: 500;
+}
+
+/* ========== 日期网格 ========== */
+.date-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.date-item {
+  width: 14.28%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8rpx 0;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.date-item:active {
+  transform: scale(0.95);
+}
+
+.date-num {
+  font-size: 28rpx;
+  color: var(--text-primary, #333);
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+/* 非当月日期 */
+.date-item.other-month .date-num {
+  color: #ccc;
+}
+
+/* 今天高亮 */
+.date-item.today .date-num {
+  background: linear-gradient(135deg, var(--primary-color, #07c160), var(--primary-light, #4cd964));
+  color: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+}
+
+/* 已完成状态 */
+.date-item.status-completed .date-num {
+  background: rgba(7, 193, 96, 0.15);
+  color: var(--primary-color, #07c160);
+  font-weight: 600;
+}
+
+.date-item.today.status-completed .date-num {
+  background: linear-gradient(135deg, var(--primary-color, #07c160), var(--primary-light, #4cd964));
+  color: #ffffff;
+}
+
+/* 未完成状态 */
+.date-item.status-missed .date-num {
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--danger-color, #f44336);
+  font-weight: 500;
+}
+
+.date-item.today.status-missed .date-num {
+  background: linear-gradient(135deg, var(--primary-color, #07c160), var(--primary-light, #4cd964));
+  color: #ffffff;
+}
+
+/* 状态圆点 */
+.status-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  margin-top: 4rpx;
+  transition: all 0.3s ease;
+}
+
+.dot-completed {
+  background: var(--primary-color, #07c160);
+}
+
+.dot-missed {
+  background: var(--danger-color, #f44336);
+}
+
+.date-item.today .status-dot {
+  background: #ffffff;
+}

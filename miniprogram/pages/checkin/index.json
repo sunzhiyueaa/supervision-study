@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "upload-photo": "/components/upload-photo/upload-photo",
+    "score-card": "/components/score-card/score-card"
+  },
+  "navigationBarTitleText": "练字打卡"
+}

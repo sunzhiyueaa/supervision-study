@@ -1,0 +1,82 @@
+<!-- pages/calendar/index.wxml - 日历记录+统计 -->
+<view class="container">
+  <!-- 月历组件 -->
+  <view class="calendar-card card anim-slide-up">
+    <calendar year="{{year}}" month="{{month}}" records="{{records}}"
+              bind:monthchange="onMonthChange"
+              bind:dayclick="onDayClick" />
+  </view>
+
+  <!-- 月度统计（渐变背景） -->
+  <view class="stats-card card anim-slide-up" style="animation-delay: 0.1s;">
+    <text class="section-title">月度统计</text>
+
+    <!-- 完成率进度条 -->
+    <view class="stats-progress-section">
+      <view class="stats-progress-header">
+        <text class="stats-progress-label">完成率</text>
+        <text class="stats-progress-value">{{completionRate}}%</text>
+      </view>
+      <view class="stats-progress-bar">
+        <view class="stats-progress-fill" style="width: {{completionRate}}%"></view>
+      </view>
+      <text class="stats-progress-detail">本月完成 {{monthCheckins}} 天 / 应完成 {{monthTotalDays}} 天</text>
+    </view>
+
+    <!-- 统计数字行 -->
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-num">{{avgScore}}</text>
+        <text class="stat-label">平均评分</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">{{streakDays}}</text>
+        <text class="stat-label">连续打卡</text>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <text class="stat-num">{{monthCheckins}}</text>
+        <text class="stat-label">本月完成</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期详情 -->
+  <view class="day-detail anim-slide-up" style="animation-delay: 0.2s;" wx:if="{{selectedDate}}">
+    <text class="section-title">{{selectedDate}} 记录</text>
+
+    <!-- 有记录 -->
+    <view class="detail-card card" wx:if="{{dayDetail}}">
+      <!-- 练字图片 -->
+      <view class="detail-photo-wrap" wx:if="{{dayDetail.photoUrl}}" bindtap="previewImage" data-url="{{dayDetail.photoUrl}}">
+        <image class="detail-photo" src="{{dayDetail.photoUrl}}" mode="aspectFit"></image>
+      </view>
+
+      <!-- 评分卡片 -->
+      <score-card score="{{dayDetail.score}}"
+                  breakdown="{{dayDetail.breakdown}}"
+                  comment="{{dayDetail.comment}}"
+                  ocrText="{{dayDetail.ocrText}}" />
+
+      <!-- 额外信息 -->
+      <view class="detail-info">
+        <view class="detail-info-item" wx:if="{{dayDetail.mistakeCount > 0}}">
+          <text class="detail-info-label">错题记录</text>
+          <text class="detail-info-value">{{dayDetail.mistakeCount}} 条</text>
+        </view>
+        <view class="detail-info-item" wx:if="{{dayDetail.completedAt}}">
+          <text class="detail-info-label">完成时间</text>
+          <text class="detail-info-value">{{dayDetail.completedAt}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 无记录 -->
+    <view class="empty-state card" wx:if="{{!dayDetail && !loading}}">
+      <text class="empty-icon">📅</text>
+      <text class="empty-text">该日无打卡记录</text>
+      <text class="empty-hint">坚持每天打卡，记录你的进步</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "ocrRecognize",
+  "version": "1.0.0",
+  "description": "OCR识别云函数（百度OCR）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

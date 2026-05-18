@@ -1,0 +1,65 @@
+{
+  "collection": "copybook_articles",
+  "description": "字帖文章素材集合 - 存储可供练字的优质段落",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "description": "素材标题"
+    },
+    "content": {
+      "type": "string",
+      "required": true,
+      "description": "素材完整内容"
+    },
+    "source": {
+      "type": "string",
+      "required": true,
+      "description": "来源：人民日报 | 半月谈 | 英语佳句 | 自定义"
+    },
+    "tags": {
+      "type": "array",
+      "required": true,
+      "description": "分类标签：时政金句 | 人生哲理 | 文学之美 | 励志名言 | 英语佳句"
+    },
+    "publishDate": {
+      "type": "string",
+      "required": false,
+      "description": "发布日期 YYYY-MM-DD"
+    },
+    "charCount": {
+      "type": "number",
+      "required": false,
+      "description": "字符数"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间"
+    },
+    "updatedAt": {
+      "type": "date",
+      "required": false,
+      "description": "更新时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "tags_index",
+      "fields": ["tags"],
+      "unique": false,
+      "description": "按标签分类查询"
+    },
+    {
+      "name": "source_index",
+      "fields": ["source"],
+      "unique": false,
+      "description": "按来源查询"
+    }
+  ]
+}

@@ -1,0 +1,407 @@
+/* app.wxss - 全局样式（清新风格，主色调绿色系 #07c160） */
+
+/* ========== 主色调变量 ========== */
+page {
+  --primary-color: #07c160;
+  --primary-light: #4cd964;
+  --primary-dark: #06ad56;
+  --accent-color: #FF9800;
+  --bg-color: #f5f5f5;
+  --card-bg: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-hint: #999999;
+  --border-color: #e0e0e0;
+  --danger-color: #f44336;
+  --success-color: #07c160;
+  --warning-color: #FF9800;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ========== 全局动画关键帧 ========== */
+
+/* 淡入 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 从下方滑入 */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 从上方滑入 */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-40rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 缩放弹入 */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 数字滚动 */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* confetti 粒子动画（4个方向） */
+@keyframes confetti1 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-120rpx, -180rpx) rotate(720deg); }
+}
+@keyframes confetti2 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(120rpx, -200rpx) rotate(-720deg); }
+}
+@keyframes confetti3 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-80rpx, -240rpx) rotate(540deg); }
+}
+@keyframes confetti4 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(80rpx, -160rpx) rotate(-540deg); }
+}
+@keyframes confetti5 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-160rpx, -120rpx) rotate(360deg); }
+}
+@keyframes confetti6 {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(160rpx, -140rpx) rotate(-360deg); }
+}
+
+/* 脉冲呼吸 */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 打勾动画 */
+@keyframes checkmark {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 闪烁 */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 旋转加载 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========== 通用动画类 ========== */
+.anim-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+.anim-slide-up {
+  animation: slideUp 0.4s ease both;
+}
+
+.anim-slide-down {
+  animation: slideDown 0.3s ease both;
+}
+
+.anim-scale-in {
+  animation: scaleIn 0.3s ease both;
+}
+
+/* 交错动画（用于列表项，需要配合 style 设置 animation-delay） */
+.anim-stagger {
+  animation: slideUp 0.4s ease both;
+}
+
+/* ========== 通用容器 ========== */
+.container {
+  padding: 20rpx;
+  box-sizing: border-box;
+  min-height: 100vh;
+}
+
+/* ========== 卡片样式（统一圆角、阴影、内边距） ========== */
+.card {
+  background-color: var(--card-bg);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+/* ========== 按钮样式 ========== */
+
+/* 主按钮（绿色） */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: #ffffff;
+  border: none;
+  border-radius: 48rpx;
+  padding: 20rpx 60rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+.btn-primary[disabled] {
+  background: #c0c0c0;
+  opacity: 0.6;
+}
+
+/* 次要按钮（白底绿边） */
+.btn-secondary {
+  background-color: #ffffff;
+  color: var(--primary-color);
+  border: 2rpx solid var(--primary-color);
+  border-radius: 48rpx;
+  padding: 18rpx 58rpx;
+  font-size: 32rpx;
+  text-align: center;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.btn-secondary::after {
+  border: none;
+}
+
+.btn-secondary:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+/* 危险按钮（红色） */
+.btn-danger {
+  background-color: #ffffff;
+  color: var(--danger-color);
+  border: 2rpx solid var(--danger-color);
+  border-radius: 48rpx;
+  padding: 18rpx 58rpx;
+  font-size: 32rpx;
+  text-align: center;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.btn-danger::after {
+  border: none;
+}
+
+.btn-danger:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+/* ========== 文字层级 ========== */
+
+/* 大标题 */
+.text-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 标题 */
+.section-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+}
+
+/* 正文 */
+.text-body {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* 次要文字 */
+.text-secondary {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+/* 辅助文字 */
+.text-hint {
+  color: var(--text-hint);
+  font-size: 24rpx;
+}
+
+/* ========== 弹性布局 ========== */
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* ========== 间距工具类 ========== */
+.mt-10 { margin-top: 10rpx; }
+.mt-20 { margin-top: 20rpx; }
+.mt-30 { margin-top: 30rpx; }
+.mb-10 { margin-bottom: 10rpx; }
+.mb-20 { margin-bottom: 20rpx; }
+.mb-30 { margin-bottom: 30rpx; }
+.p-20 { padding: 20rpx; }
+.p-30 { padding: 30rpx; }
+
+/* ========== 通用空状态 ========== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 40rpx;
+  animation: fadeIn 0.5s ease both;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: #bbb;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 24rpx;
+  color: #ccc;
+  margin-bottom: 30rpx;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.empty-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  border-radius: 36rpx;
+  padding: 16rpx 56rpx;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.empty-btn:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+.empty-btn-text {
+  font-size: 28rpx;
+  color: #fff;
+}
+
+/* ========== 通用加载状态 ========== */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.loading-spinner {
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid #e0e0e0;
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 16rpx;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: var(--text-hint);
+}
+
+/* ========== 骨架屏效果 ========== */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8rpx;
+}
+
+/* ========== 通用分割线 ========== */
+.divider {
+  width: 100%;
+  height: 1rpx;
+  background: #f0f0f0;
+  margin: 20rpx 0;
+}
+
+/* ========== 通用标签 ========== */
+.tag {
+  font-size: 20rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+  display: inline-block;
+}
+
+.tag-primary {
+  color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.1);
+}
+
+.tag-warning {
+  color: var(--warning-color);
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.tag-danger {
+  color: var(--danger-color);
+  background: rgba(244, 67, 54, 0.1);
+}

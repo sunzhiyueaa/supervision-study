@@ -1,0 +1,82 @@
+/* components/upload-photo/upload-photo.wxss - 照片上传组件样式 */
+
+.upload-wrap {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.image-item {
+  position: relative;
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.image-thumb {
+  width: 100%;
+  height: 100%;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48rpx;
+  height: 48rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 0 16rpx 0 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.delete-btn:active {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.delete-icon {
+  color: #ffffff;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+/* 添加按钮（虚线边框 + 友好提示） */
+.add-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #c0c0c0;
+  background: #fafafa;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.add-btn:active {
+  background: rgba(7, 193, 96, 0.05);
+  border-color: var(--primary-color, #07c160);
+}
+
+.add-icon {
+  font-size: 56rpx;
+  color: #bbb;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.add-btn:active .add-icon {
+  color: var(--primary-color, #07c160);
+}
+
+.add-text {
+  font-size: 20rpx;
+  color: #999;
+  margin-top: 6rpx;
+}

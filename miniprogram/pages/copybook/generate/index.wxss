@@ -1,0 +1,276 @@
+/* pages/copybook/generate/index.wxss - 字帖生成样式 */
+
+/* ========== 章节头部 ========== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.source-label {
+  font-size: 22rpx;
+  color: var(--primary-color, #07c160);
+  background: rgba(7, 193, 96, 0.1);
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+/* ========== 文本编辑器 ========== */
+.text-editor {
+  width: 100%;
+  min-height: 120rpx;
+  font-size: 30rpx;
+  line-height: 1.6;
+  color: #333;
+  padding: 16rpx;
+  background: #f9f9f9;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+  border: 2rpx solid transparent;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.text-editor:focus {
+  border-color: var(--primary-color, #07c160);
+  background: #ffffff;
+}
+
+.text-counter {
+  text-align: right;
+  margin-top: 8rpx;
+}
+
+.counter-text {
+  font-size: 22rpx;
+  color: #999;
+}
+
+/* ========== 选项行 ========== */
+.option-row {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.option-row:last-child {
+  border-bottom: none;
+}
+
+.option-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  display: block;
+  font-weight: 500;
+}
+
+/* ========== 单选按钮组（字体样式） ========== */
+.radio-group {
+  display: flex;
+  gap: 16rpx;
+}
+
+.radio-item {
+  flex: 1;
+  text-align: center;
+  padding: 14rpx 0;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+  border: 2rpx solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.radio-item.active {
+  background: rgba(7, 193, 96, 0.1);
+  border-color: var(--primary-color, #07c160);
+  box-shadow: 0 2rpx 8rpx rgba(7, 193, 96, 0.15);
+}
+
+.radio-text {
+  font-size: 28rpx;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.radio-item.active .radio-text {
+  color: var(--primary-color, #07c160);
+  font-weight: 600;
+}
+
+/* ========== 格子类型选择 ========== */
+.grid-type-group {
+  display: flex;
+  gap: 20rpx;
+  justify-content: space-between;
+}
+
+.grid-type-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  flex: 1;
+  padding: 16rpx 8rpx;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+  border: 2rpx solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.grid-type-item.active {
+  background: rgba(7, 193, 96, 0.1);
+  border-color: var(--primary-color, #07c160);
+  box-shadow: 0 2rpx 8rpx rgba(7, 193, 96, 0.15);
+}
+
+.grid-icon {
+  width: 48rpx;
+  height: 48rpx;
+  border: 2rpx solid #999;
+  position: relative;
+}
+
+.grid-icon-inner {
+  width: 100%;
+  height: 100%;
+}
+
+/* 田字格图标 */
+.grid-icon-0 .grid-icon-inner {
+  border-top: 1rpx dashed #ccc;
+  border-bottom: 1rpx dashed #ccc;
+  position: relative;
+}
+
+.grid-icon-0 .grid-icon-inner::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  border-left: 1rpx dashed #ccc;
+}
+
+/* 米字格图标 */
+.grid-icon-1 .grid-icon-inner {
+  border-top: 1rpx dashed #ccc;
+  border-bottom: 1rpx dashed #ccc;
+  position: relative;
+}
+
+.grid-icon-1 .grid-icon-inner::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  border-left: 1rpx dashed #ccc;
+}
+
+.grid-icon-1 .grid-icon-inner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-left: 1rpx dashed #ccc;
+  border-top: 1rpx dashed #ccc;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+/* 方格图标 - 无辅助线 */
+.grid-icon-2 {
+  border: 2rpx solid #999;
+}
+
+/* 横线图标 */
+.grid-icon-3 {
+  border: none;
+  border-bottom: 2rpx solid #999;
+}
+
+.grid-type-text {
+  font-size: 22rpx;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.grid-type-item.active .grid-type-text {
+  color: var(--primary-color, #07c160);
+  font-weight: 600;
+}
+
+/* ========== 字号/字数选择 ========== */
+.size-group {
+  display: flex;
+  gap: 16rpx;
+}
+
+.size-item {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+  border: 2rpx solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.size-item.active {
+  background: rgba(7, 193, 96, 0.1);
+  border-color: var(--primary-color, #07c160);
+  box-shadow: 0 2rpx 8rpx rgba(7, 193, 96, 0.15);
+}
+
+.size-text {
+  font-size: 26rpx;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.size-item.active .size-text {
+  color: var(--primary-color, #07c160);
+  font-weight: 600;
+}
+
+/* ========== 预览区域 ========== */
+.preview-wrapper {
+  position: relative;
+  background: #f9f9f9;
+  border-radius: 12rpx;
+  overflow: hidden;
+  min-height: 600rpx;
+  border: 2rpx solid #f0f0f0;
+}
+
+.copybook-canvas {
+  width: 100%;
+  height: 600rpx;
+}
+
+.preview-empty {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.preview-empty-text {
+  font-size: 28rpx;
+  color: #ccc;
+}
+
+/* ========== 操作按钮 ========== */
+.btn-group {
+  padding-bottom: 60rpx;
+}
+
+.action-btn {
+  width: 100%;
+}

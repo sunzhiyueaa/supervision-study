@@ -1,0 +1,126 @@
+<!-- pages/rewards/index.wxml - 积分奖励（我的页面） -->
+<view class="container">
+  <!-- 顶部用户信息+积分总览 -->
+  <view class="profile-card card anim-slide-up">
+    <view class="profile-top flex-row">
+      <view class="avatar-wrap">
+        <image class="avatar-img" src="{{userInfo.avatar || '/images/tab-me-active.png'}}" mode="aspectFill" />
+      </view>
+      <view class="profile-info">
+        <text class="nickname">{{userInfo.nickname || '未设置'}}</text>
+        <view class="streak-badge flex-row">
+          <text class="streak-icon">🔥</text>
+          <text class="streak-text">连续 {{streakDays}} 天</text>
+        </view>
+      </view>
+    </view>
+    <view class="points-display flex-row">
+      <view class="points-main flex-column">
+        <text class="points-label">总积分</text>
+        <text class="points-num points-anim">{{totalPoints}}</text>
+      </view>
+      <view class="points-divider"></view>
+      <view class="points-sub flex-column">
+        <text class="points-label">今日</text>
+        <text class="points-sub-num points-anim">+{{todayPoints}}</text>
+      </view>
+      <view class="points-divider"></view>
+      <view class="points-sub flex-column">
+        <text class="points-label">本周</text>
+        <text class="points-sub-num points-anim">+{{weekPoints}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 成就徽章 -->
+  <view class="card mt-20 anim-slide-up" style="animation-delay: 0.1s;">
+    <text class="section-title">成就徽章</text>
+    <view class="achievement-grid">
+      <view class="achievement-item {{item.unlocked ? 'unlocked' : 'locked'}}" wx:for="{{achievements}}" wx:key="id">
+        <view class="achievement-icon-wrap">
+          <text class="achievement-icon">{{item.icon}}</text>
+          <view class="achievement-glow" wx:if="{{item.unlocked}}"></view>
+        </view>
+        <text class="achievement-name">{{item.name}}</text>
+        <text class="achievement-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 积分规则 -->
+  <view class="card mt-20 anim-slide-up" style="animation-delay: 0.15s;">
+    <text class="section-title">积分规则</text>
+    <view class="rule-item flex-between">
+      <text class="rule-name">每日练字打卡</text>
+      <text class="rule-points">+10 分</text>
+    </view>
+    <view class="rule-item flex-between">
+      <text class="rule-name">每日错题记录</text>
+      <text class="rule-points">+5 分</text>
+    </view>
+    <view class="rule-item flex-between">
+      <text class="rule-name">字体评分90+</text>
+      <text class="rule-points">+5 分</text>
+    </view>
+    <view class="rule-item flex-between">
+      <text class="rule-name">生成字帖并练习</text>
+      <text class="rule-points">+3 分</text>
+    </view>
+    <view class="rule-item flex-between">
+      <text class="rule-name">连续打卡7天</text>
+      <text class="rule-points bonus">+50 分</text>
+    </view>
+    <view class="rule-item flex-between">
+      <text class="rule-name">连续打卡30天</text>
+      <text class="rule-points bonus">+200 分</text>
+    </view>
+  </view>
+
+  <!-- 积分明细 -->
+  <view class="card mt-20 anim-slide-up" style="animation-delay: 0.2s;">
+    <text class="section-title">积分明细</text>
+    <view class="log-group" wx:for="{{pointsLog}}" wx:key="date">
+      <text class="log-date-label">{{item.dateDisplay}}</text>
+      <view class="log-item flex-between anim-stagger" wx:for="{{item.items}}" wx:for-item="log" wx:key="_id"
+            style="animation-delay: {{index * 0.05}}s;">
+        <view class="log-left">
+          <text class="log-desc">{{log.description}}</text>
+          <text class="log-time">{{log.timeStr}}</text>
+        </view>
+        <text class="log-points {{log.points > 0 ? 'positive' : 'negative'}}">
+          {{log.points > 0 ? '+' : ''}}{{log.points}} 分
+        </text>
+      </view>
+    </view>
+    <view class="empty-state" wx:if="{{pointsLog.length === 0 && !loading}}">
+      <text class="empty-icon">💰</text>
+      <text class="empty-text">暂无积分记录</text>
+      <text class="empty-hint">开始打卡赚取积分吧</text>
+    </view>
+    <view class="loading-state" wx:if="{{loading}}">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+    <view class="no-more" wx:if="{{!hasMore && pointsLog.length > 0}}">
+      <text class="no-more-text">没有更多了</text>
+    </view>
+  </view>
+
+  <!-- 底部功能入口 -->
+  <view class="footer-actions mt-20 anim-slide-up" style="animation-delay: 0.25s;">
+    <view class="action-card card" bindtap="goToSettings">
+      <view class="action-left flex-row">
+        <text class="action-icon-text">⚙️</text>
+        <text class="action-text">提醒设置</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+    <view class="action-card card" bindtap="goToMistakes">
+      <view class="action-left flex-row">
+        <text class="action-icon-text">📝</text>
+        <text class="action-text">错题本</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+  </view>
+</view>

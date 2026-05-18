@@ -1,0 +1,115 @@
+{
+  "collection": "daily_records",
+  "description": "每日记录集合 - 包含练字打卡和错题记录",
+  "fields": {
+    "_id": {
+      "type": "string",
+      "required": false,
+      "description": "系统自动生成的文档ID"
+    },
+    "openid": {
+      "type": "string",
+      "required": true,
+      "description": "所属用户的openid"
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "description": "记录类型：checkin(练字打卡) | mistake(错题)"
+    },
+    "date": {
+      "type": "string",
+      "required": false,
+      "description": "日期，格式 YYYY-MM-DD（checkin和mistake类型均使用）"
+    },
+    "photoUrl": {
+      "type": "string",
+      "required": false,
+      "description": "照片云存储fileID（兼容字段，第一张图）"
+    },
+    "images": {
+      "type": "array",
+      "required": false,
+      "description": "图片云存储fileID数组（支持多图）",
+      "items": {
+        "type": "string"
+      }
+    },
+    "score": {
+      "type": "number",
+      "required": false,
+      "default": 0,
+      "description": "字体评分（仅checkin类型）"
+    },
+    "comment": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "评分评语（仅checkin类型）"
+    },
+    "earnedPoints": {
+      "type": "number",
+      "required": false,
+      "default": 0,
+      "description": "本次获得积分（仅checkin类型）"
+    },
+    "subject": {
+      "type": "string",
+      "required": false,
+      "description": "科目（仅mistake类型）：语文/数学/英语/物理/化学/生物/政治/历史/地理"
+    },
+    "description": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "错题描述（仅mistake类型）"
+    },
+    "errorType": {
+      "type": "string",
+      "required": false,
+      "description": "错误原因分类（仅mistake类型）：粗心/不会/审题错误/计算错误"
+    },
+    "question": {
+      "type": "string",
+      "required": false,
+      "description": "题目内容（兼容旧字段，新数据用description）"
+    },
+    "answer": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "答案（仅mistake类型）"
+    },
+    "solved": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "是否已解决（仅mistake类型）"
+    },
+    "createdAt": {
+      "type": "date",
+      "required": false,
+      "description": "创建时间"
+    }
+  },
+  "indexes": [
+    {
+      "name": "openid_date_type",
+      "fields": ["openid", "date", "type"],
+      "unique": false,
+      "description": "用于查询用户某日某类型的记录"
+    },
+    {
+      "name": "openid_type_date",
+      "fields": ["openid", "type", "date"],
+      "unique": false,
+      "description": "用于按类型和日期范围查询记录"
+    },
+    {
+      "name": "openid_type_subject_date",
+      "fields": ["openid", "type", "subject", "date"],
+      "unique": false,
+      "description": "用于按科目和日期筛选错题"
+    }
+  ]
+}
