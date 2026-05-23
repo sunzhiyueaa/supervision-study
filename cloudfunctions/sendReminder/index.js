@@ -7,7 +7,7 @@ const db = cloud.database()
 const _ = db.command
 
 // 订阅消息模板ID（需在微信公众平台申请后替换）
-const TEMPLATE_ID = 'TEMPLATE_ID_REMINDER'
+const TEMPLATE_ID = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
 
 // 提醒消息内容模板（递增强度）
 const REMINDER_MESSAGES = [
@@ -56,6 +56,12 @@ exports.main = async (event, context) => {
       const reminderLevel = getReminderLevel(currentTimeStr, reminderTime)
 
       if (reminderLevel === -1) {
+        skipCount++
+        continue
+      }
+
+      // 检查用户今天是否已订阅（一次性模板需要每天重新订阅）
+      if (user.subscribedDate !== todayStr) {
         skipCount++
         continue
       }
@@ -113,6 +119,11 @@ exports.main = async (event, context) => {
             sentAt: db.serverDate(),
             createdAt: db.serverDate()
           }
+        })
+
+        // 发送成功后清除订阅日期（权限已消耗）
+        await db.collection('users').where({ openid }).update({
+          data: { subscribedDate: '' }
         })
 
         sentCount++

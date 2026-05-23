@@ -2,6 +2,9 @@
 const { callAPI } = require('../../services/api')
 const { formatDate } = require('../../utils/date')
 
+// 订阅消息模板ID
+const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
+
 Page({
   data: {
     todayDate: '',
@@ -20,7 +23,10 @@ Page({
     // 是否已上传完成（等待评分）
     uploaded: false,
     // confetti 动画
-    showConfetti: false
+    showConfetti: false,
+    // 订阅弹窗
+    showSubscribeModal: false,
+    todaySubscribed: false
   },
 
   onLoad() {
@@ -29,6 +35,9 @@ Page({
       todayDate: formatDate(today, 'M月D日')
     })
     this.loadTodayRecord()
+
+    // 检查今日是否已订阅
+    this.checkTodaySubscribed()
   },
 
   // 加载今日打卡记录
@@ -50,6 +59,14 @@ Page({
     } finally {
       wx.hideLoading()
     }
+  },
+
+  // 检查今日是否已订阅
+  checkTodaySubscribed() {
+    const today = formatDate(new Date(), 'YYYY-MM-DD')
+    const key = 'subscribeToday_' + today
+    const subscribed = wx.getStorageSync(key)
+    this.setData({ todaySubscribed: !!subscribed })
   },
 
   // 添加图片回调
@@ -114,6 +131,9 @@ Page({
         this.setData({ showConfetti: true })
         setTimeout(() => {
           this.setData({ showConfetti: false })
+          // 动画结束后弹出订阅弹窗
+          this.checkTodaySubscribed()
+          this.setData({ showSubscribeModal: true })
         }, 2500)
         wx.showToast({ title: '打卡成功！', icon: 'success' })
         this.setData({
@@ -185,5 +205,42 @@ Page({
       current: current,
       urls: this.data.cloudImages
     })
+  },
+
+  // 执行订阅
+  doSubscribe() {
+    wx.requestSubscribeMessage({
+      tmplIds: [TEMPLATE_ID_REMINDER],
+      success: (res) => {
+        if (res[TEMPLATE_ID_REMINDER] === 'accept') {
+          // 本地标记今日已订阅
+          const today = formatDate(new Date(), 'YYYY-MM-DD')
+          const key = 'subscribeToday_' + today
+          wx.setStorageSync(key, true)
+          this.setData({ todaySubscribed: true })
+
+          // 同步到云端
+          callAPI('submitRecord', {
+            type: 'updateSubscribeDate',
+            subscribedDate: today
+          }).catch(err => {
+            console.error('更新订阅日期失败', err)
+          })
+
+          wx.showToast({ title: '订阅成功', icon: 'success' })
+        } else {
+          wx.showToast({ title: '您已拒绝订阅', icon: 'none' })
+        }
+      },
+      fail: (err) => {
+        console.error('订阅消息失败', err)
+        wx.showToast({ title: '订阅失败，请稍后重试', icon: 'none' })
+      }
+    })
+  },
+
+  // 关闭订阅弹窗
+  closeSubscribeModal() {
+    this.setData({ showSubscribeModal: false })
   }
 })

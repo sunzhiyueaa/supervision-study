@@ -3,7 +3,7 @@ const { callAPI } = require('../../services/api')
 const { getUserInfo } = require('../../utils/auth')
 
 // 订阅消息模板ID占位符（需在微信后台申请后替换）
-const TEMPLATE_ID_REMINDER = 'TEMPLATE_ID_REMINDER'
+const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
 
 Page({
   data: {
@@ -13,7 +13,11 @@ Page({
     totalCheckins: 0,
     totalPoints: 0,
     registerDays: 0,
-    saving: false
+    saving: false,
+
+    // 字体管理
+    fontList: [],
+    uploadingFont: false
   },
 
   onLoad() {
@@ -48,6 +52,9 @@ Page({
           totalCheckins: res.data.totalCheckins || 0
         })
       }
+
+      // 加载用户字体列表
+      this.loadFontList()
     } catch (err) {
       console.error('加载设置失败', err)
     }
@@ -103,7 +110,7 @@ Page({
           wx.showToast({ title: '您已拒绝订阅，将无法收到提醒', icon: 'none' })
         }
       },
-      fail: (err) {
+      fail: (err) => {
         console.error('订阅消息失败', err)
         wx.showToast({ title: '订阅失败，请稍后重试', icon: 'none' })
       }
@@ -164,5 +171,112 @@ Page({
     } finally {
       this.setData({ saving: false })
     }
+  },
+
+  // 加载用户字体列表
+  async loadFontList() {
+    try {
+      const res = await callAPI('getRecords', { type: 'fonts' })
+      if (res && res.code === 0) {
+        const fontList = (res.data || []).map(item => ({
+          ...item,
+          fileSizeText: this.formatFileSize(item.fileSize)
+        }))
+        this.setData({ fontList })
+      }
+    } catch (err) {
+      console.error('加载字体列表失败:', err)
+    }
+  },
+
+  // 上传字体文件
+  uploadFont() {
+    if (this.data.uploadingFont) return
+    if (this.data.fontList.length >= 5) {
+      wx.showToast({ title: '最多上传5个字体', icon: 'none' })
+      return
+    }
+
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['ttf'],
+      success: (res) => {
+        const file = res.tempFiles[0]
+        // 检查文件大小（20MB限制）
+        if (file.size > 20 * 1024 * 1024) {
+          wx.showToast({ title: '文件不能超过20MB', icon: 'none' })
+          return
+        }
+        this.doUploadFont(file)
+      }
+    })
+  },
+
+  // 执行上传
+  async doUploadFont(file) {
+    this.setData({ uploadingFont: true })
+    wx.showLoading({ title: '上传中...' })
+
+    try {
+      const app = getApp()
+      const openid = app.globalData.openid
+      const fileName = file.name.replace(/\.ttf$/i, '')
+      const cloudPath = `fonts/${openid}/${Date.now()}-${file.name}`
+
+      // 上传到云存储
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: file.path
+      })
+
+      // 记录到数据库
+      await callAPI('submitRecord', {
+        type: 'addFont',
+        fileName,
+        fileID: uploadRes.fileID,
+        fileSize: file.size
+      })
+
+      wx.showToast({ title: '上传成功', icon: 'success' })
+      this.loadFontList()
+    } catch (err) {
+      console.error('上传字体失败:', err)
+      wx.showToast({ title: '上传失败', icon: 'none' })
+    } finally {
+      this.setData({ uploadingFont: false })
+      wx.hideLoading()
+    }
+  },
+
+  // 删除字体
+  deleteFont(e) {
+    const { id, fileid, name } = e.currentTarget.dataset
+    wx.showModal({
+      title: '删除字体',
+      content: `确定删除字体"${name}"吗？`,
+      success: async (res) => {
+        if (!res.confirm) return
+        try {
+          await callAPI('submitRecord', {
+            type: 'deleteFont',
+            fontId: id,
+            fileID: fileid
+          })
+          wx.showToast({ title: '已删除', icon: 'success' })
+          this.loadFontList()
+        } catch (err) {
+          console.error('删除字体失败:', err)
+          wx.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    })
+  },
+
+  // 格式化文件大小
+  formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + 'B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + 'MB'
   }
 })

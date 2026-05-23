@@ -266,6 +266,15 @@
   color: #ccc;
 }
 
+/* ========== A4打印画布（隐藏） ========== */
+.a4-canvas {
+  position: fixed;
+  left: -9999rpx;
+  top: 0;
+  width: 2480px;
+  height: 3508px;
+}
+
 /* ========== 操作按钮 ========== */
 .btn-group {
   padding-bottom: 60rpx;

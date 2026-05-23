@@ -104,4 +104,34 @@
       <text class="confetti-text">打卡成功！</text>
     </view>
   </view>
+
+  <!-- 订阅提醒弹窗 -->
+  <view class="subscribe-modal-mask" wx:if="{{showSubscribeModal}}" bindtap="closeSubscribeModal">
+    <view class="subscribe-modal" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">明日提醒订阅</text>
+      </view>
+      <view class="modal-body">
+        <text class="modal-desc">打卡成功！订阅提醒，明天继续坚持练字</text>
+      </view>
+      <view class="modal-footer">
+        <view class="modal-btn-group" wx:if="{{!todaySubscribed}}">
+          <view class="modal-btn modal-btn-later" bindtap="closeSubscribeModal">
+            <text>稍后再说</text>
+          </view>
+          <view class="modal-btn modal-btn-subscribe" bindtap="doSubscribe">
+            <text>去订阅</text>
+          </view>
+        </view>
+        <view class="modal-btn-group" wx:if="{{todaySubscribed}}">
+          <view class="modal-btn modal-btn-subscribed" disabled>
+            <text>已订阅 ✓</text>
+          </view>
+          <view class="modal-btn modal-btn-later" bindtap="closeSubscribeModal">
+            <text>知道了</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>

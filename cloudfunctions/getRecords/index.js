@@ -1,5 +1,5 @@
 // 云函数 getRecords - 获取历史记录
-// 支持：今日记录、仪表盘、月度记录、日期记录、错题列表、字帖列表、统计
+// 支持：今日记录、仪表盘、月度记录、日期记录、错题列表、字帖列表、字体列表、统计
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
@@ -24,6 +24,8 @@ exports.main = async (event, context) => {
         return await getMistakes(openid, event)
       case 'copybooks':
         return await getCopybooks(openid, event)
+      case 'fonts':
+        return await getFonts(openid)
       case 'stats':
         return await getStats(openid)
       default:
@@ -39,25 +41,23 @@ exports.main = async (event, context) => {
 async function getTodayRecord(openid) {
   const today = formatDate(new Date())
 
-  // 今日打卡
-  const checkinRes = await db.collection('daily_records').where({
-    openid,
-    date: today,
-    type: 'checkin'
-  }).get()
+  // 并行执行所有查询以提高性能
+  const [checkinRes, mistakeCount, userRes] = await Promise.all([
+    db.collection('daily_records').where({
+      openid,
+      date: today,
+      type: 'checkin'
+    }).get(),
+    db.collection('daily_records').where({
+      openid,
+      type: 'mistake',
+      date: today
+    }).count(),
+    db.collection('users').where({ openid }).get()
+  ])
 
   const checkedIn = checkinRes.data.length > 0
   const record = checkedIn ? checkinRes.data[0] : null
-
-  // 今日错题数量
-  const mistakeCount = await db.collection('daily_records').where({
-    openid,
-    type: 'mistake',
-    date: today
-  }).count()
-
-  // 获取用户积分
-  const userRes = await db.collection('users').where({ openid }).get()
   const user = userRes.data[0] || {}
 
   return {
@@ -74,30 +74,25 @@ async function getTodayRecord(openid) {
 // 获取仪表盘数据（首页所需所有数据）
 async function getDashboard(openid) {
   const today = formatDate(new Date())
-
-  // 今日打卡
-  const todayCheckin = await db.collection('daily_records').where({
-    openid, date: today, type: 'checkin'
-  }).get()
-
-  // 今日错题数量
-  const todayMistakeCount = await db.collection('daily_records').where({
-    openid, type: 'mistake', date: today
-  }).count()
-
-  // 连续打卡天数
-  const streakDays = await calculateStreak(openid)
-
-  // 本周打卡日期
   const weekDates = getWeekDates()
-  const weekCheckins = await db.collection('daily_records').where({
-    openid, type: 'checkin',
-    date: _.in(weekDates)
-  }).get()
-  const checkedDates = weekCheckins.data.map(r => r.date)
 
-  // 用户积分
-  const userRes = await db.collection('users').where({ openid }).get()
+  // 并行执行所有查询以提高性能
+  const [todayCheckin, todayMistakeCount, streakDays, weekCheckins, userRes] = await Promise.all([
+    db.collection('daily_records').where({
+      openid, date: today, type: 'checkin'
+    }).get(),
+    db.collection('daily_records').where({
+      openid, type: 'mistake', date: today
+    }).count(),
+    calculateStreak(openid),
+    db.collection('daily_records').where({
+      openid, type: 'checkin',
+      date: _.in(weekDates)
+    }).get(),
+    db.collection('users').where({ openid }).get()
+  ])
+
+  const checkedDates = weekCheckins.data.map(r => r.date)
   const user = userRes.data[0] || {}
 
   return {
@@ -112,21 +107,33 @@ async function getDashboard(openid) {
   }
 }
 
-// 计算连续打卡天数
+// 计算连续打卡天数（优化版：一次查询获取最近记录）
 async function calculateStreak(openid) {
-  let streak = 0
   const today = new Date()
+  const todayStr = formatDate(today)
 
-  for (let i = 0; i < 365; i++) {
+  // 查询最近90天的打卡记录（足够覆盖绝大多数连续打卡场景）
+  const startDate = new Date(today)
+  startDate.setDate(today.getDate() - 90)
+  const startStr = formatDate(startDate)
+
+  const res = await db.collection('daily_records').where({
+    openid,
+    type: 'checkin',
+    date: _.gte(startStr).and(_.lte(todayStr))
+  }).orderBy('date', 'desc').get()
+
+  // 构建日期集合
+  const dateSet = new Set(res.data.map(r => r.date))
+
+  // 计算连续天数
+  let streak = 0
+  for (let i = 0; i < 90; i++) {
     const d = new Date(today)
     d.setDate(today.getDate() - i)
     const dateStr = formatDate(d)
 
-    const res = await db.collection('daily_records').where({
-      openid, date: dateStr, type: 'checkin'
-    }).count()
-
-    if (res.total > 0) {
+    if (dateSet.has(dateStr)) {
       streak++
     } else {
       // 如果是今天且还没打卡，跳过今天继续算
@@ -145,11 +152,15 @@ async function getMonthRecords(openid, event) {
   const lastDay = new Date(year, month, 0).getDate()
   const endDate = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
 
-  const res = await db.collection('daily_records').where({
-    openid,
-    type: 'checkin',
-    date: _.gte(startDate).and(_.lte(endDate))
-  }).get()
+  // 并行执行查询以提高性能
+  const [res, streakDays] = await Promise.all([
+    db.collection('daily_records').where({
+      openid,
+      type: 'checkin',
+      date: _.gte(startDate).and(_.lte(endDate))
+    }).get(),
+    calculateStreak(openid)
+  ])
 
   const checkedDates = res.data.map(r => r.date)
   const monthCheckins = res.data.length
@@ -160,8 +171,6 @@ async function getMonthRecords(openid, event) {
     const totalScore = res.data.reduce((sum, r) => sum + (r.score || 0), 0)
     avgScore = Math.round(totalScore / res.data.length)
   }
-
-  const streakDays = await calculateStreak(openid)
 
   return {
     code: 0,
@@ -209,31 +218,29 @@ async function getMistakes(openid, event) {
     query.solved = true
   }
 
-  const res = await db.collection('daily_records').where(query)
-    .orderBy('createdAt', 'desc')
-    .limit(50)
-    .get()
-
-  // 错题统计
+  // 并行执行所有查询以提高性能
   const today = formatDate(new Date())
-  const todayCount = await db.collection('daily_records').where({
-    openid, type: 'mistake', date: today
-  }).count()
-
-  // 本周统计
   const weekDates = getWeekDates()
-  const weekCount = await db.collection('daily_records').where({
-    openid, type: 'mistake',
-    date: _.in(weekDates)
-  }).count()
-
-  // 本月统计
   const now = new Date()
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const monthCount = await db.collection('daily_records').where({
-    openid, type: 'mistake',
-    date: _.gte(monthStart)
-  }).count()
+
+  const [res, todayCount, weekCount, monthCount] = await Promise.all([
+    db.collection('daily_records').where(query)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .get(),
+    db.collection('daily_records').where({
+      openid, type: 'mistake', date: today
+    }).count(),
+    db.collection('daily_records').where({
+      openid, type: 'mistake',
+      date: _.in(weekDates)
+    }).count(),
+    db.collection('daily_records').where({
+      openid, type: 'mistake',
+      date: _.gte(monthStart)
+    }).count()
+  ])
 
   return {
     code: 0,
@@ -279,6 +286,18 @@ async function getStats(openid) {
   return {
     code: 0,
     data: { totalCheckins: res.total }
+  }
+}
+
+// 获取用户字体列表
+async function getFonts(openid) {
+  const res = await db.collection('user_fonts').where({ openid })
+    .orderBy('createdAt', 'desc')
+    .get()
+
+  return {
+    code: 0,
+    data: res.data
   }
 }
 

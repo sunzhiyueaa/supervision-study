@@ -231,3 +231,77 @@
   color: var(--primary-color);
   text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
+
+/* ========== 订阅提醒弹窗 ========== */
+.subscribe-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.subscribe-modal {
+  width: 580rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 40rpx 40rpx 20rpx;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 10rpx 40rpx 30rpx;
+  text-align: center;
+}
+
+.modal-desc {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.modal-footer {
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.modal-btn-group {
+  display: flex;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 28rpx 0;
+  text-align: center;
+  font-size: 30rpx;
+}
+
+.modal-btn-later {
+  color: var(--text-secondary);
+  border-right: 1rpx solid #f0f0f0;
+}
+
+.modal-btn-subscribe {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.modal-btn-subscribed {
+  color: var(--primary-color);
+  background: rgba(7, 193, 96, 0.08);
+  border-right: 1rpx solid #f0f0f0;
+}

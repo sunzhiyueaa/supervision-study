@@ -78,6 +78,31 @@
     </view>
   </view>
 
+  <!-- 字体管理 -->
+  <view class="card mt-20">
+    <text class="section-title">字体管理</text>
+    <view class="font-upload-btn" bindtap="uploadFont">
+      <text class="font-upload-text">+ 上传字体文件（.ttf）</text>
+    </view>
+    <view class="font-tip" wx:if="{{fontList.length === 0}}">
+      <text class="font-tip-text">暂无自定义字体，上传后可在字帖生成时选择使用</text>
+    </view>
+    <view class="font-list" wx:if="{{fontList.length > 0}}">
+      <view class="font-list-title">
+        <text class="font-list-title-text">已上传字体（{{fontList.length}}/5）</text>
+      </view>
+      <view class="font-item" wx:for="{{fontList}}" wx:key="_id">
+        <view class="font-info">
+          <text class="font-name">{{item.fileName}}</text>
+          <text class="font-size">{{item.fileSizeText}}</text>
+        </view>
+        <view class="font-delete" data-id="{{item._id}}" data-fileid="{{item.fileID}}" data-name="{{item.fileName}}" bindtap="deleteFont">
+          <text class="font-delete-text">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <!-- 保存按钮 -->
   <view class="save-wrap mt-20">
     <button class="btn-primary save-btn" bindtap="saveSettings" loading="{{saving}}" disabled="{{saving}}">

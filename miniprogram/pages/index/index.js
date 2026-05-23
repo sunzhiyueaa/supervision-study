@@ -4,7 +4,7 @@ const { checkLogin } = require('../../utils/auth')
 const { formatDate, getWeekday, getWeekDays } = require('../../utils/date')
 
 // 订阅消息模板ID占位符（需在微信后台申请后替换）
-const TEMPLATE_ID_REMINDER = 'TEMPLATE_ID_REMINDER'
+const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
 
 Page({
   data: {

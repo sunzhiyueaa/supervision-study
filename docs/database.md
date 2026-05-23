@@ -238,3 +238,36 @@
   "createdAt": "2024-01-15T19:00:00.000Z"
 }
 ```
+
+---
+
+## 7. user_fonts - 用户自定义字体
+
+**用途**：存储用户上传的自定义字体文件信息。
+
+| 字段 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| _id | string | 否 | 自动生成 | 文档ID |
+| openid | string | 是 | - | 所属用户openid |
+| fileName | string | 是 | - | 字体名称（从文件名提取，去掉.ttf后缀） |
+| fileID | string | 是 | - | 云存储文件ID（cloud://...） |
+| fileSize | number | 否 | 0 | 文件大小（字节） |
+| createdAt | date | 否 | serverDate() | 上传时间 |
+
+**索引设计**：
+
+| 索引名 | 字段 | 唯一 | 说明 |
+|--------|------|------|------|
+| openid_createdAt | openid, createdAt | 否 | 按用户和时间查询字体 |
+
+**数据示例**：
+```json
+{
+  "_id": "font001",
+  "openid": "oXXXXXXXXXXXXXXXX",
+  "fileName": "荆霄鹏",
+  "fileID": "cloud://xxx/fonts/oXXX/1716460800000-荆霄鹏.ttf",
+  "fileSize": 12845056,
+  "createdAt": "2026-05-23T10:00:00.000Z"
+}
+```

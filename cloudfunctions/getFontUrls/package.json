@@ -1,0 +1,9 @@
+{
+  "name": "getFontUrls",
+  "version": "1.0.0",
+  "description": "获取字体文件临时链接（管理员权限，绕过存储权限限制）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -9,8 +9,9 @@ Page({
     articleId: '',
     sourceName: '',
     // 配置选项
-    fontStyle: '楷体',
-    fontStyles: ['楷体', '行楷'],
+    fontStyle: '默认',
+    fontStyles: ['默认'],
+    userFonts: [],
     gridType: '田字格',
     gridTypes: ['田字格', '米字格', '方格', '横线'],
     fontSize: 'medium',
@@ -25,13 +26,18 @@ Page({
     generating: false,
     saving: false,
     canvasReady: false,
-    tempFilePath: ''
+    tempFilePath: '',
   },
 
   // Canvas 相关
   canvas: null,
   ctx: null,
   dpr: 1,
+  // A4 画布相关
+  a4Canvas: null,
+  a4Ctx: null,
+  // 字体加载状态
+  fontsLoaded: false,
 
   onLoad(options) {
     this.dpr = wx.getWindowInfo().pixelRatio || 2
@@ -68,6 +74,8 @@ Page({
   onReady() {
     // 页面初次渲染完成时初始化 Canvas
     this.initCanvas()
+    this.initA4Canvas()
+    this.loadFonts()
   },
 
   // 初始化 Canvas 2D
@@ -82,36 +90,86 @@ Page({
         this.canvas = canvas
         this.ctx = ctx
         this.setData({ canvasReady: true })
-        // 初始绘制
-        if (this.data.text) {
-          this.drawCopybook()
-        }
       })
   },
 
-  // 文本输入（防抖绘制）
-  _drawTimer: null,
+  // 初始化 A4 打印画布
+  initA4Canvas() {
+    const query = wx.createSelectorQuery()
+    query.select('#a4Canvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res[0]) return
+        const canvas = res[0].node
+        const ctx = canvas.getContext('2d')
+        // A4 纸 300DPI: 2480 x 3508 像素
+        canvas.width = 2480
+        canvas.height = 3508
+        this.a4Canvas = canvas
+        this.a4Ctx = ctx
+      })
+  },
+
+  // 加载用户自定义字体
+  async loadFonts() {
+    try {
+      const { callAPI } = require('../../../services/api')
+      const res = await callAPI('getRecords', { type: 'fonts' })
+      if (res && res.code === 0 && res.data && res.data.length > 0) {
+        const userFonts = res.data
+        this.setData({ userFonts })
+
+        // 构建字体样式列表
+        const fontStyles = ['默认', ...userFonts.map(f => f.fileName)]
+        this.setData({ fontStyles })
+
+        // 下载字体文件到本地临时目录，再用本地路径加载
+        for (const font of userFonts) {
+          try {
+            console.log('下载字体文件:', font.fileName, font.fileID)
+            const downloadRes = await wx.cloud.downloadFile({
+              fileID: font.fileID
+            })
+            console.log('字体下载成功:', font.fileName, downloadRes.tempFilePath)
+
+            // 用本地临时文件路径加载字体
+            wx.loadFontFace({
+              family: font.fileName,
+              source: `url("${downloadRes.tempFilePath}")`,
+              global: true,
+              success: () => {
+                console.log('字体加载成功:', font.fileName)
+              },
+              fail: (err) => {
+                console.warn('字体加载失败:', font.fileName, JSON.stringify(err))
+              }
+            })
+          } catch (err) {
+            console.warn('字体下载失败:', font.fileName, JSON.stringify(err))
+          }
+        }
+      }
+      this.fontsLoaded = true
+    } catch (err) {
+      console.error('加载字体列表失败:', err)
+    }
+  },
+
+  // 文本输入
   onTextInput(e) {
     this.setData({ text: e.detail.value })
-    // 防抖：输入停止 300ms 后重绘
-    if (this._drawTimer) clearTimeout(this._drawTimer)
-    this._drawTimer = setTimeout(() => {
-      if (this.data.canvasReady) this.drawCopybook()
-    }, 300)
   },
 
   // 字体样式选择
   onFontStyleChange(e) {
     const index = e.currentTarget.dataset.value
     this.setData({ fontStyle: this.data.fontStyles[index] })
-    if (this.data.canvasReady) this.drawCopybook()
   },
 
   // 格子类型选择
   onGridTypeSelect(e) {
     const type = e.currentTarget.dataset.type
     this.setData({ gridType: type })
-    if (this.data.canvasReady) this.drawCopybook()
   },
 
   // 字号选择
@@ -121,7 +179,6 @@ Page({
       fontSize: this.data.fontSizes[index],
       fontSizeIndex: index
     })
-    if (this.data.canvasReady) this.drawCopybook()
   },
 
   // 每行字数选择
@@ -131,7 +188,30 @@ Page({
       columns: this.data.columnsOptions[index],
       columnsIndex: index
     })
-    if (this.data.canvasReady) this.drawCopybook()
+  },
+
+  // 生成预览（点击按钮触发，确保字体加载完成后再绘制）
+  async previewCopybook() {
+    if (!this.data.text || !this.data.text.trim()) {
+      wx.showToast({ title: '请输入练字内容', icon: 'none' })
+      return
+    }
+    if (!this.data.canvasReady) {
+      wx.showToast({ title: '画布未就绪', icon: 'none' })
+      return
+    }
+
+    wx.showLoading({ title: '生成中...' })
+
+    // 如果字体还没加载，先加载
+    if (!this.fontsLoaded) {
+      await this.loadFonts()
+      // 等待字体资源就绪
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+
+    this.drawCopybook()
+    wx.hideLoading()
   },
 
   // 绘制字帖（核心方法）
@@ -188,8 +268,13 @@ Page({
     ctx.fillStyle = '#333333'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    // 使用系统字体，楷体在大多数设备上可用
-    const fontFamily = this.data.fontStyle === '行楷' ? 'STXingkai, XingKai,楷体,KaiTi,serif' : 'KaiTi,楷体,STKaiti,serif'
+    // 使用自定义字体或默认字体
+    let fontFamily
+    if (this.data.fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${this.data.fontStyle}', serif`
+    }
     ctx.font = `${charSize}px ${fontFamily}`
 
     for (let i = 0; i < chars.length; i++) {
@@ -269,6 +354,87 @@ Page({
     }
   },
 
+  // 绘制 A4 尺寸字帖（用于打印导出）
+  drawA4Copybook() {
+    const { text, gridType, fontSize, columns, fontStyle } = this.data
+    if (!text || !text.trim()) return
+    if (!this.a4Canvas || !this.a4Ctx) return
+
+    const ctx = this.a4Ctx
+    const canvas = this.a4Canvas
+
+    // A4 纸 300DPI: 2480 x 3508 像素
+    const A4_W = 2480
+    const A4_H = 3508
+    const MARGIN = 100 // 页边距（像素）
+
+    // 计算可用区域
+    const availW = A4_W - MARGIN * 2
+    const availH = A4_H - MARGIN * 2
+
+    // 根据列数和可用宽度计算格子大小
+    const gridSize = Math.floor(availW / columns)
+    const rows = Math.floor(availH / gridSize)
+
+    // 过滤空白字符
+    const chars = text.replace(/\s+/g, '').split('')
+
+    // 居中偏移
+    const totalW = columns * gridSize
+    const actualRows = Math.ceil(chars.length / columns)
+    const displayRows = Math.min(actualRows, rows)
+    const totalH = displayRows * gridSize
+    const offsetX = MARGIN + Math.floor((availW - totalW) / 2)
+    const offsetY = MARGIN + Math.floor((availH - totalH) / 2)
+
+    // 清空并绘制白色背景
+    ctx.clearRect(0, 0, A4_W, A4_H)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, A4_W, A4_H)
+
+    // 绘制格子
+    for (let row = 0; row < displayRows; row++) {
+      for (let col = 0; col < columns; col++) {
+        const x = offsetX + col * gridSize
+        const y = offsetY + row * gridSize
+        this.drawGrid(ctx, x, y, gridSize, gridType)
+      }
+    }
+
+    // 绘制示范字
+    const charSize = gridSize * 0.65
+    ctx.fillStyle = '#333333'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    let fontFamily
+    if (fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${fontStyle}', serif`
+    }
+    ctx.font = `${charSize}px ${fontFamily}`
+
+    for (let i = 0; i < chars.length && Math.floor(i / columns) < rows; i++) {
+      const row = Math.floor(i / columns)
+      const col = i % columns
+      const cx = offsetX + col * gridSize + gridSize / 2
+      const cy = offsetY + row * gridSize + gridSize / 2
+      ctx.fillStyle = '#333333'
+      ctx.fillText(chars[i], cx, cy)
+    }
+  },
+
+  // 从 A4 画布导出临时文件
+  a4CanvasToTempFile() {
+    return new Promise((resolve, reject) => {
+      wx.canvasToTempFilePath({
+        canvas: this.a4Canvas,
+        success: (res) => resolve(res.tempFilePath),
+        fail: reject
+      })
+    })
+  },
+
   // 生成并保存到相册
   async generateAndSave() {
     if (!this.data.text || !this.data.text.trim()) {
@@ -281,8 +447,9 @@ Page({
 
     this.setData({ saving: true })
     try {
-      // 1. 从 Canvas 导出图片
-      const tempFilePath = await this.canvasToTempFile()
+      // 1. 绘制 A4 尺寸字帖并导出
+      this.drawA4Copybook()
+      const tempFilePath = await this.a4CanvasToTempFile()
       this.setData({ tempFilePath: tempFilePath })
 
       // 2. 保存到相册

@@ -34,9 +34,18 @@ exports.main = async (event, context) => {
       case 'updateProfile':
         // 更新个人资料
         return await updateProfile(openid, event)
+      case 'addFont':
+        // 添加用户字体记录
+        return await addFont(openid, event)
+      case 'deleteFont':
+        // 删除用户字体
+        return await deleteFont(openid, event)
       case 'updateScore':
         // 更新打卡评分
         return await updateScore(openid, event)
+      case 'updateSubscribeDate':
+        // 更新用户订阅日期
+        return await updateSubscribeDate(openid, event)
       default:
         return { code: -1, message: '未知记录类型' }
     }
@@ -80,21 +89,21 @@ async function submitCheckin(openid, event) {
     }
   })
 
-  // 更新用户积分
-  await db.collection('users').where({ openid }).update({
-    data: { totalPoints: _.inc(earnedPoints) }
-  })
-
-  // 记录积分日志
-  await db.collection('points_log').add({
-    data: {
-      openid,
-      points: earnedPoints,
-      description: '练字打卡',
-      type: 'checkin',
-      createdAt: db.serverDate()
-    }
-  })
+  // 并行执行积分更新和积分日志记录
+  await Promise.all([
+    db.collection('users').where({ openid }).update({
+      data: { totalPoints: _.inc(earnedPoints) }
+    }),
+    db.collection('points_log').add({
+      data: {
+        openid,
+        points: earnedPoints,
+        description: '练字打卡',
+        type: 'checkin',
+        createdAt: db.serverDate()
+      }
+    })
+  ])
 
   // 检查连续打卡奖励
   await checkStreakBonus(openid, date)
@@ -131,38 +140,50 @@ async function checkStreakBonus(openid, currentDate) {
     }
   }
 
+  // 并行处理奖励逻辑
+  const bonusPromises = []
+
   // 连续7天额外奖励 +50分
   if (streak >= 7 && streak % 7 === 0) {
     const bonusPoints = 50
-    await db.collection('points_log').add({
-      data: {
-        openid,
-        points: bonusPoints,
-        description: '连续打卡7天奖励',
-        type: 'streak_bonus',
-        createdAt: db.serverDate()
-      }
-    })
-    await db.collection('users').where({ openid }).update({
-      data: { totalPoints: _.inc(bonusPoints) }
-    })
+    bonusPromises.push(
+      db.collection('points_log').add({
+        data: {
+          openid,
+          points: bonusPoints,
+          description: '连续打卡7天奖励',
+          type: 'streak_bonus',
+          createdAt: db.serverDate()
+        }
+      }),
+      db.collection('users').where({ openid }).update({
+        data: { totalPoints: _.inc(bonusPoints) }
+      })
+    )
   }
 
   // 连续30天额外奖励 +200分
   if (streak >= 30 && streak % 30 === 0) {
     const bonusPoints = 200
-    await db.collection('points_log').add({
-      data: {
-        openid,
-        points: bonusPoints,
-        description: '连续打卡30天奖励',
-        type: 'streak_bonus_30',
-        createdAt: db.serverDate()
-      }
-    })
-    await db.collection('users').where({ openid }).update({
-      data: { totalPoints: _.inc(bonusPoints) }
-    })
+    bonusPromises.push(
+      db.collection('points_log').add({
+        data: {
+          openid,
+          points: bonusPoints,
+          description: '连续打卡30天奖励',
+          type: 'streak_bonus_30',
+          createdAt: db.serverDate()
+        }
+      }),
+      db.collection('users').where({ openid }).update({
+        data: { totalPoints: _.inc(bonusPoints) }
+      })
+    )
+  }
+
+  // 并行执行所有奖励操作
+  if (bonusPromises.length > 0) {
+    await Promise.all(bonusPromises)
   }
 }
 
@@ -203,20 +224,22 @@ async function addMistake(openid, event) {
     }
   })
 
-  // 记录积分
+  // 并行记录积分
   const earnedPoints = 5
-  await db.collection('points_log').add({
-    data: {
-      openid,
-      points: earnedPoints,
-      description: '记录错题',
-      type: 'mistake',
-      createdAt: db.serverDate()
-    }
-  })
-  await db.collection('users').where({ openid }).update({
-    data: { totalPoints: _.inc(earnedPoints) }
-  })
+  await Promise.all([
+    db.collection('points_log').add({
+      data: {
+        openid,
+        points: earnedPoints,
+        description: '记录错题',
+        type: 'mistake',
+        createdAt: db.serverDate()
+      }
+    }),
+    db.collection('users').where({ openid }).update({
+      data: { totalPoints: _.inc(earnedPoints) }
+    })
+  ])
 
   return { code: 0, message: '添加成功', data: null }
 }
@@ -247,20 +270,22 @@ async function deleteMistake(openid, event) {
 
   await db.collection('daily_records').doc(mistakeId).remove()
 
-  // 扣除积分
+  // 并行扣除积分
   const deductPoints = -5
-  await db.collection('points_log').add({
-    data: {
-      openid,
-      points: deductPoints,
-      description: '删除错题',
-      type: 'mistake_delete',
-      createdAt: db.serverDate()
-    }
-  })
-  await db.collection('users').where({ openid }).update({
-    data: { totalPoints: _.inc(deductPoints) }
-  })
+  await Promise.all([
+    db.collection('points_log').add({
+      data: {
+        openid,
+        points: deductPoints,
+        description: '删除错题',
+        type: 'mistake_delete',
+        createdAt: db.serverDate()
+      }
+    }),
+    db.collection('users').where({ openid }).update({
+      data: { totalPoints: _.inc(deductPoints) }
+    })
+  ])
 
   return { code: 0, message: '删除成功', data: null }
 }
@@ -280,20 +305,22 @@ async function saveCopybook(openid, event) {
     }
   })
 
-  // 生成字帖并练习 +3分
+  // 并行记录积分
   const earnedPoints = 3
-  await db.collection('points_log').add({
-    data: {
-      openid,
-      points: earnedPoints,
-      description: '生成字帖并练习',
-      type: 'copybook',
-      createdAt: db.serverDate()
-    }
-  })
-  await db.collection('users').where({ openid }).update({
-    data: { totalPoints: _.inc(earnedPoints) }
-  })
+  await Promise.all([
+    db.collection('points_log').add({
+      data: {
+        openid,
+        points: earnedPoints,
+        description: '生成字帖并练习',
+        type: 'copybook',
+        createdAt: db.serverDate()
+      }
+    }),
+    db.collection('users').where({ openid }).update({
+      data: { totalPoints: _.inc(earnedPoints) }
+    })
+  ])
 
   return { code: 0, message: '保存成功', data: null }
 }
@@ -361,28 +388,106 @@ async function updateScore(openid, event) {
 
   // 字体评分90+额外+5分
   if (score && score >= 90) {
-    // 检查是否已经发过此奖励（同一记录只发一次）
-    const existBonus = await db.collection('points_log').where({
-      openid,
-      type: 'score_bonus',
-      description: '字体评分90+奖励'
-    }).count()
-
     // 每次评分90+都给奖励
     const bonusPoints = 5
-    await db.collection('points_log').add({
-      data: {
-        openid,
-        points: bonusPoints,
-        description: '字体评分90+奖励',
-        type: 'score_bonus',
-        createdAt: db.serverDate()
-      }
-    })
-    await db.collection('users').where({ openid }).update({
-      data: { totalPoints: _.inc(bonusPoints) }
-    })
+    await Promise.all([
+      db.collection('points_log').add({
+        data: {
+          openid,
+          points: bonusPoints,
+          description: '字体评分90+奖励',
+          type: 'score_bonus',
+          createdAt: db.serverDate()
+        }
+      }),
+      db.collection('users').where({ openid }).update({
+        data: { totalPoints: _.inc(bonusPoints) }
+      })
+    ])
   }
 
   return { code: 0, message: '评分已更新', data: null }
+}
+
+// 添加用户字体记录
+async function addFont(openid, event) {
+  const { fileName, fileID, fileSize } = event
+
+  if (!fileName || !fileID) {
+    return { code: -1, message: '缺少必要参数', data: null }
+  }
+
+  // 检查字体数量限制
+  const countRes = await db.collection('user_fonts').where({ openid }).count()
+  if (countRes.total >= 5) {
+    return { code: -1, message: '最多上传5个字体', data: null }
+  }
+
+  // 检查是否重名
+  const existRes = await db.collection('user_fonts').where({
+    openid,
+    fileName
+  }).get()
+  if (existRes.data.length > 0) {
+    return { code: -1, message: '已存在同名字体', data: null }
+  }
+
+  await db.collection('user_fonts').add({
+    data: {
+      openid,
+      fileName,
+      fileID,
+      fileSize: fileSize || 0,
+      createdAt: db.serverDate()
+    }
+  })
+
+  return { code: 0, message: '添加成功', data: null }
+}
+
+// 删除用户字体
+async function deleteFont(openid, event) {
+  const { fontId } = event
+
+  if (!fontId) {
+    return { code: -1, message: '缺少字体ID', data: null }
+  }
+
+  // 安全检查：确保该记录属于当前用户
+  const record = await db.collection('user_fonts').doc(fontId).get()
+  if (!record.data || record.data.openid !== openid) {
+    return { code: -1, message: '无权操作', data: null }
+  }
+
+  // 从数据库记录中获取 fileID（不信任客户端传入的 fileID）
+  const fileID = record.data.fileID
+
+  // 删除云存储文件
+  if (fileID) {
+    try {
+      await cloud.deleteFile({ fileList: [fileID] })
+    } catch (err) {
+      console.warn('删除云存储文件失败:', err)
+    }
+  }
+
+  // 删除数据库记录
+  await db.collection('user_fonts').doc(fontId).remove()
+
+  return { code: 0, message: '删除成功', data: null }
+}
+
+// 更新用户订阅日期
+async function updateSubscribeDate(openid, event) {
+  const { subscribedDate } = event
+
+  if (!subscribedDate) {
+    return { code: -1, message: '缺少订阅日期', data: null }
+  }
+
+  await db.collection('users').where({ openid }).update({
+    data: { subscribedDate }
+  })
+
+  return { code: 0, message: '订阅日期已更新', data: null }
 }
