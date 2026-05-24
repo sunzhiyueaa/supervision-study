@@ -28,6 +28,10 @@ exports.main = async (event, context) => {
         return await getFonts(openid)
       case 'stats':
         return await getStats(openid)
+      case 'course_progress':
+        return await getCourseProgress(openid)
+      case 'course_lessons':
+        return await getCourseLessons(event)
       default:
         return { code: -1, message: '未知查询类型', data: null }
     }
@@ -286,6 +290,54 @@ async function getStats(openid) {
   return {
     code: 0,
     data: { totalCheckins: res.total }
+  }
+}
+
+// 获取用户课程进度
+async function getCourseProgress(openid) {
+  try {
+    const userRes = await db.collection('users').where({ openid }).get()
+    const user = userRes.data[0] || {}
+    const progress = user.courseProgress || {
+      currentLesson: 1,
+      completedLessons: [],
+      dailyUnlocked: false
+    }
+
+    return {
+      code: 0,
+      data: {
+        ...progress,
+        totalPoints: user.totalPoints || 0
+      }
+    }
+  } catch (err) {
+    console.error('获取课程进度失败:', err)
+    return { code: -1, message: '获取课程进度失败', data: null }
+  }
+}
+
+// 获取课程列表
+async function getCourseLessons(event) {
+  const { stage } = event
+  try {
+    let query = {}
+    if (stage) {
+      query.stage = stage
+    }
+
+    const res = await db.collection('course_lessons')
+      .where(query)
+      .orderBy('lessonNo', 'asc')
+      .get()
+
+    return {
+      code: 0,
+      data: res.data
+    }
+  } catch (err) {
+    console.error('获取课程列表失败:', err)
+    return { code: -1, message: '获取课程列表失败', data: null }
   }
 }
 

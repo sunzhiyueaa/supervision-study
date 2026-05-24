@@ -1,226 +1,208 @@
-// pages/copybook/articles/index.js - 素材文章列表
+// pages/copybook/articles/index.js - 素材文章列表（课程 + 每日素材）
 const copybookService = require('../../../services/copybook')
+const appConfig = require('../../../config')
+
+// 阶段名称映射
+const STAGE_NAMES = {
+  1: '控笔与基本笔画',
+  2: '高频偏旁部首',
+  3: '间架结构黄金法则',
+  4: '高考易错高频字实战',
+  5: '实用篇章书写'
+}
 
 Page({
   data: {
-    articles: [],
-    categories: ['时政金句', '人生哲理', '文学之美', '励志名言', '英语佳句'],
-    currentCategory: '',
-    keyword: '',
-    page: 1,
-    hasMore: true,
+    // Tab
+    activeTab: 0, // 0=课程, 1=每日素材
+
+    // 课程数据
+    lessons: [],           // 全部课程列表
+    lessonsByStage: [],    // 按阶段分组
+    courseProgress: null,  // 用户进度
+
+    // 每日素材数据
+    dailyArticle: null,
+    dailyLoading: false,
+
+    // 通用
+    mode: 'prod',
     loading: false,
-    initialized: false,
-    // 添加素材弹窗
-    showAddModal: false,
-    addForm: {
-      source: '',
-      title: '',
-      content: '',
-      tags: '自定义'
-    }
+    initialized: false
   },
 
   onLoad() {
-    this.checkAndInit()
+    this.loadData()
   },
 
   onShow() {
     if (this.data.initialized) {
-      this.loadArticles()
+      this.refreshProgress()
     }
   },
 
-  // 检查是否需要初始化默认素材
-  async checkAndInit() {
-    try {
-      // 先尝试加载文章，如果为空则初始化
-      const res = await copybookService.getArticles({ page: 1, pageSize: 1 })
-      if (res && res.code === 0 && res.total === 0) {
-        // 数据库为空，初始化默认素材
-        wx.showLoading({ title: '加载素材中...' })
-        await copybookService.initArticles()
-        wx.hideLoading()
-      }
-      this.setData({ initialized: true })
-      this.loadArticles()
-    } catch (err) {
-      console.error('检查初始化失败', err)
-      this.setData({ initialized: true })
-      this.loadArticles()
-    }
-  },
-
-  // 下拉刷新
-  onPullDownRefresh() {
-    this.setData({ page: 1, hasMore: true })
-    this.loadArticles().then(() => {
-      wx.stopPullDownRefresh()
-    })
-  },
-
-  // 触底加载更多
-  onReachBottom() {
-    if (this.data.hasMore && !this.data.loading) {
-      this.loadMore()
-    }
-  },
-
-  // 加载文章列表
-  async loadArticles() {
-    if (this.data.loading) return
+  // 加载所有数据
+  async loadData() {
     this.setData({ loading: true })
-
     try {
-      const res = await copybookService.getArticles({
-        category: this.data.currentCategory || undefined,
-        keyword: this.data.keyword || undefined,
-        page: 1
+      // 并行加载课程列表和用户进度
+      const [lessonsRes, progressRes] = await Promise.all([
+        copybookService.getCourseLessons(),
+        copybookService.getCourseProgress()
+      ])
+
+      let lessons = []
+      if (lessonsRes && lessonsRes.code === 0) {
+        lessons = lessonsRes.data || []
+      }
+
+      let courseProgress = { currentLesson: 1, completedLessons: [], dailyUnlocked: false, totalPoints: 0 }
+      if (progressRes && progressRes.code === 0) {
+        courseProgress = progressRes.data || courseProgress
+      }
+
+      // 按阶段分组
+      const lessonsByStage = this.groupByStage(lessons, courseProgress)
+
+      this.setData({
+        lessons,
+        lessonsByStage,
+        courseProgress,
+        mode: appConfig.mode,
+        initialized: true
       })
-      if (res && res.code === 0) {
-        const articles = (res.data || []).map(item => this.formatArticle(item))
-        this.setData({
-          articles: articles,
-          page: 1,
-          hasMore: res.hasMore || false
-        })
+
+      // 如果在每日素材tab，加载素材
+      if (this.data.activeTab === 1) {
+        this.loadDailyArticle()
       }
     } catch (err) {
-      console.error('加载文章列表失败', err)
+      console.error('加载数据失败:', err)
       wx.showToast({ title: '加载失败', icon: 'none' })
     } finally {
       this.setData({ loading: false })
     }
   },
 
-  // 格式化文章数据
-  formatArticle(item) {
-    const source = item.source || '未知来源'
-    const tags = item.tags || []
-    return {
-      ...item,
-      sourceName: source,
-      // 来源颜色：人民日报红色，半月谈蓝色，英语佳句橙色，其他灰色
-      sourceType: source === '人民日报' ? 'red' :
-                  source === '半月谈' ? 'blue' :
-                  source === '英语佳句' ? 'orange' : 'gray',
-      tagText: tags.length > 0 ? tags[0] : '',
-      charCountText: item.charCount ? item.charCount + '字' : ''
+  // 刷新进度（从页面返回时）
+  async refreshProgress() {
+    try {
+      const progressRes = await copybookService.getCourseProgress()
+      if (progressRes && progressRes.code === 0) {
+        const courseProgress = progressRes.data || this.data.courseProgress
+        const lessonsByStage = this.groupByStage(this.data.lessons, courseProgress)
+        this.setData({ courseProgress, lessonsByStage })
+      }
+    } catch (err) {
+      console.error('刷新进度失败', err)
     }
   },
 
-  // 搜索输入
-  onSearchInput(e) {
-    this.setData({ keyword: e.detail.value })
-  },
+  // 按阶段分组课程
+  groupByStage(lessons, progress) {
+    const isDev = appConfig.mode === 'dev'
+    const completedLessons = progress.completedLessons || []
+    const currentLesson = progress.currentLesson || 1
 
-  // 确认搜索
-  onSearchConfirm() {
-    this.loadArticles()
-  },
+    const stageMap = {}
+    lessons.forEach(lesson => {
+      if (!stageMap[lesson.stage]) {
+        stageMap[lesson.stage] = {
+          stage: lesson.stage,
+          stageName: lesson.stageName || STAGE_NAMES[lesson.stage] || `阶段${lesson.stage}`,
+          lessons: []
+        }
+      }
 
-  // 清空搜索
-  onSearchClear() {
-    this.setData({ keyword: '' })
-    this.loadArticles()
-  },
+      const isCompleted = completedLessons.includes(lesson.lessonNo)
+      const isCurrent = lesson.lessonNo === currentLesson
+      const isUnlocked = isDev || isCompleted || isCurrent
 
-  // 设置分类
-  setCategory(e) {
-    const cat = e.currentTarget.dataset.cat
-    this.setData({ currentCategory: cat })
-    this.loadArticles()
-  },
-
-  // 加载更多
-  async loadMore() {
-    if (this.data.loading) return
-    const nextPage = this.data.page + 1
-    this.setData({ loading: true })
-
-    try {
-      const res = await copybookService.getArticles({
-        category: this.data.currentCategory || undefined,
-        keyword: this.data.keyword || undefined,
-        page: nextPage
+      stageMap[lesson.stage].lessons.push({
+        ...lesson,
+        isCompleted,
+        isCurrent,
+        isUnlocked,
+        statusText: isCompleted ? '✅' : (isCurrent ? '🔓' : '🔒')
       })
+    })
+
+    return Object.values(stageMap).sort((a, b) => a.stage - b.stage)
+  },
+
+  // 切换Tab
+  switchTab(e) {
+    const tab = parseInt(e.currentTarget.dataset.tab)
+    this.setData({ activeTab: tab })
+    if (tab === 1 && !this.data.dailyArticle && !this.data.dailyLoading) {
+      this.loadDailyArticle()
+    }
+  },
+
+  // 加载今日素材
+  async loadDailyArticle() {
+    const isUnlocked = appConfig.mode === 'dev' || (this.data.courseProgress && this.data.courseProgress.dailyUnlocked)
+    if (!isUnlocked) return
+
+    this.setData({ dailyLoading: true })
+    try {
+      const res = await copybookService.getDailyArticle()
       if (res && res.code === 0) {
-        const newArticles = (res.data || []).map(item => this.formatArticle(item))
-        this.setData({
-          articles: [...this.data.articles, ...newArticles],
-          page: nextPage,
-          hasMore: res.hasMore || false
-        })
+        if (res.data) {
+          this.setData({ dailyArticle: res.data })
+        } else {
+          // 今日素材不存在，触发生成
+          this.generateDailyArticle()
+        }
       }
     } catch (err) {
-      console.error('加载更多失败', err)
+      console.error('加载每日素材失败:', err)
     } finally {
-      this.setData({ loading: false })
+      this.setData({ dailyLoading: false })
     }
   },
 
-  // 跳转字帖生成
-  goToGenerate(e) {
-    const article = e.currentTarget.dataset.article
-    // 将文章内容传递给生成页
-    wx.navigateTo({
-      url: `/pages/copybook/generate/index?articleId=${article._id}&content=${encodeURIComponent(article.content)}&source=${encodeURIComponent(article.sourceName)}`
-    })
-  },
-
-  // 打开添加素材弹窗
-  openAddModal() {
-    this.setData({
-      showAddModal: true,
-      addForm: { source: '', title: '', content: '', tags: '自定义' }
-    })
-  },
-
-  // 关闭添加素材弹窗
-  closeAddModal() {
-    this.setData({ showAddModal: false })
-  },
-
-  // 添加表单输入
-  onAddFormInput(e) {
-    const field = e.currentTarget.dataset.field
-    this.setData({ [`addForm.${field}`]: e.detail.value })
-  },
-
-  // 提交添加素材
-  async submitAddArticle() {
-    const { source, title, content, tags } = this.data.addForm
-    if (!title.trim()) {
-      wx.showToast({ title: '请输入标题', icon: 'none' })
-      return
-    }
-    if (!content.trim()) {
-      wx.showToast({ title: '请输入内容', icon: 'none' })
-      return
-    }
-
+  // 触发生成今日素材
+  async generateDailyArticle() {
     try {
-      wx.showLoading({ title: '添加中...' })
-      const res = await copybookService.addArticle({
-        source: source || '自定义',
-        title: title,
-        content: content,
-        tags: tags ? [tags] : ['自定义']
+      const res = await wx.cloud.callFunction({
+        name: 'generateDailyArticle',
+        data: {}
       })
-      wx.hideLoading()
-
-      if (res && res.code === 0) {
-        wx.showToast({ title: '添加成功', icon: 'success' })
-        this.setData({ showAddModal: false })
-        this.loadArticles()
-      } else {
-        wx.showToast({ title: res.message || '添加失败', icon: 'none' })
+      if (res.result && res.result.code === 0) {
+        // 生成成功，重新加载
+        const articleRes = await copybookService.getDailyArticle()
+        if (articleRes && articleRes.code === 0 && articleRes.data) {
+          this.setData({ dailyArticle: articleRes.data })
+        }
       }
     } catch (err) {
-      wx.hideLoading()
-      console.error('添加素材失败', err)
-      wx.showToast({ title: '添加失败', icon: 'none' })
+      console.error('触发生成每日素材失败:', err)
     }
+  },
+
+  // 点击课程
+  onTapLesson(e) {
+    const lesson = e.currentTarget.dataset.lesson
+    if (!lesson.isUnlocked) {
+      wx.showToast({ title: '请先完成前面的课程', icon: 'none' })
+      return
+    }
+
+    // 课程内容：书写要点 + 示范字
+    const content = lesson.tips + '\n\n示范字：' + lesson.demoChars
+    wx.navigateTo({
+      url: `/pages/copybook/generate/index?content=${encodeURIComponent(content)}&source=${encodeURIComponent('第' + lesson.lessonNo + '课：' + lesson.title)}&lessonNo=${lesson.lessonNo}`
+    })
+  },
+
+  // 点击每日素材
+  onTapDailyArticle() {
+    if (!this.data.dailyArticle) return
+    const article = this.data.dailyArticle
+    wx.navigateTo({
+      url: `/pages/copybook/generate/index?articleId=${article._id}&content=${encodeURIComponent(article.content)}&source=${encodeURIComponent('每日素材')}`
+    })
   },
 
   // 阻止冒泡

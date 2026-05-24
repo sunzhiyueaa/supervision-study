@@ -70,11 +70,59 @@ function addArticle(data) {
   })
 }
 
+/**
+ * 获取课程列表
+ * @param {number} stage - 阶段编号（可选）
+ * @returns {Promise<object>} 课程列表
+ */
+function getCourseLessons(stage) {
+  return callAPI('getRecords', {
+    type: 'course_lessons',
+    stage: stage
+  })
+}
+
+/**
+ * 获取用户课程进度
+ * @returns {Promise<object>} 课程进度
+ */
+function getCourseProgress() {
+  return callAPI('getRecords', {
+    type: 'course_progress'
+  })
+}
+
+/**
+ * 标记课程完成
+ * @param {number} lessonNo - 课号
+ * @returns {Promise<object>} 完成结果
+ */
+function completeCourseLesson(lessonNo) {
+  return callAPI('submitRecord', {
+    type: 'course_complete',
+    lessonNo: lessonNo
+  })
+}
+
+/**
+ * 获取今日每日素材
+ * @returns {Promise<object>} 今日素材
+ */
+function getDailyArticle() {
+  return callAPI('fetchArticles', {
+    type: 'daily'
+  })
+}
+
 module.exports = {
   getArticles,
   getArticleDetail,
   generateCopybook,
   getMyGallery,
   initArticles,
-  addArticle
+  addArticle,
+  getCourseLessons,
+  getCourseProgress,
+  completeCourseLesson,
+  getDailyArticle
 }

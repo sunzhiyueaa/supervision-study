@@ -1,0 +1,116 @@
+<h2>实现方案对比</h2>
+<p class="subtitle">选择最适合的实现方式</p>
+
+<div class="cards">
+  <div class="card" data-choice="scheme1" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding: 20px; background: #f9f9f9;">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">方案1：简化配置（推荐）</div>
+        <div style="font-size: 12px; color: #666;">
+          <p>移除：字号大小、每行字数选择</p>
+          <p>保留：格子类型（田字格/米字格/方格/横线）</p>
+          <p>新增：课程模式练习方式选择</p>
+          <p>预览：A4比例，点击查看大图</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>简化配置</h3>
+      <p>保留格子类型选择，移除字号和行数配置，课程模式增加练习方式</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>用户选择更简单</li>
+            <li>保留常用的格子类型</li>
+            <li>实现复杂度适中</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>缺点</h4>
+          <ul>
+            <li>仍需维护格子类型逻辑</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="scheme2" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding: 20px; background: #f9f9f9;">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">方案2：完全简化</div>
+        <div style="font-size: 12px; color: #666;">
+          <p>移除：所有配置选项（字号、行数、格子类型）</p>
+          <p>新增：课程模式练习方式选择</p>
+          <p>预览：A4比例，点击查看大图</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>完全简化</h3>
+      <p>移除所有配置，只保留课程模式的练习方式选择</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>界面最简洁</li>
+            <li>实现最简单</li>
+            <li>用户体验最直接</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>缺点</h4>
+          <ul>
+            <li>失去格子类型自定义</li>
+            <li>灵活性降低</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="scheme3" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="padding: 20px; background: #f9f9f9;">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">方案3：保留所有配置</div>
+        <div style="font-size: 12px; color: #666;">
+          <p>保留：格子类型、字号大小、每行字数</p>
+          <p>新增：课程模式练习方式选择</p>
+          <p>预览：A4比例，点击查看大图</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>保留所有配置</h3>
+      <p>保留现有所有配置选项，只增加课程模式练习方式</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>优点</h4>
+          <ul>
+            <li>最大灵活性</li>
+            <li>改动最小</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>缺点</h4>
+          <ul>
+            <li>配置项较多</li>
+            <li>与"取消选择字号大小和行数"需求不符</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border-radius: 8px;">
+  <h3 style="margin-bottom: 10px;">推荐方案</h3>
+  <p><strong>方案1（简化配置）</strong>是最平衡的选择：</p>
+  <ul style="margin-top: 10px; padding-left: 20px;">
+    <li>移除字号大小和每行字数选择（符合需求）</li>
+    <li>保留格子类型选择（田字格/米字格/方格/横线）</li>
+    <li>课程模式增加练习方式选择</li>
+    <li>预览图按A4纸比例，点击查看大图</li>
+  </ul>
+</div>

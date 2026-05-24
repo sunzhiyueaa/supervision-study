@@ -44,26 +44,14 @@
       </view>
     </view>
 
-    <!-- 字号选择 -->
-    <view class="option-row">
-      <text class="option-label">字号大小</text>
-      <view class="size-group">
-        <view class="size-item {{fontSizeIndex === index ? 'active' : ''}}" 
-              wx:for="{{fontSizeLabels}}" wx:key="*this"
-              bindtap="onFontSizeSelect" data-index="{{index}}">
-          <text class="size-text">{{item}}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 每行字数 -->
-    <view class="option-row">
-      <text class="option-label">每行字数</text>
-      <view class="size-group">
-        <view class="size-item {{columnsIndex === index ? 'active' : ''}}" 
-              wx:for="{{columnsOptions}}" wx:key="*this"
-              bindtap="onColumnsSelect" data-index="{{index}}">
-          <text class="size-text">{{item}}字</text>
+    <!-- 练习模式（仅课程模式显示） -->
+    <view class="option-row" wx:if="{{sourceType === 'course'}}">
+      <text class="option-label">练习模式</text>
+      <view class="radio-group">
+        <view class="radio-item {{(practiceMode === 'trace' && index === 0) || (practiceMode === 'one-empty' && index === 1) || (practiceMode === 'one-extra' && index === 2) ? 'active' : ''}}"
+              wx:for="{{practiceModeLabels}}" wx:key="*this"
+              bindtap="onPracticeModeSelect" data-index="{{index}}">
+          <text class="radio-text">{{item}}</text>
         </view>
       </view>
     </view>
@@ -79,11 +67,14 @@
   <!-- 预览区域 -->
   <view class="card mt-20">
     <text class="section-title">字帖预览</text>
-    <view class="preview-wrapper">
+    <view class="preview-wrapper" bindtap="previewImage">
       <canvas type="2d" id="copybookCanvas" class="copybook-canvas"
               style="width: 100%; height: 600rpx;"></canvas>
       <view class="preview-empty" wx:if="{{!layoutData}}">
         <text class="preview-empty-text">配置好后点击"生成预览"</text>
+      </view>
+      <view class="preview-hint" wx:if="{{layoutData}}">
+        <text class="preview-hint-text">点击查看大图</text>
       </view>
     </view>
   </view>

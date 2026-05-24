@@ -8,25 +8,25 @@ Page({
     text: '',
     articleId: '',
     sourceName: '',
+    // 来源类型：'course'（课程）或 'daily'（每日素材）
+    sourceType: 'course',
     // 配置选项
     fontStyle: '默认',
     fontStyles: ['默认'],
     userFonts: [],
     gridType: '田字格',
     gridTypes: ['田字格', '米字格', '方格', '横线'],
-    fontSize: 'medium',
-    fontSizes: ['small', 'medium', 'large'],
-    fontSizeLabels: ['小', '中', '大'],
-    fontSizeIndex: 1,
-    columns: 6,
-    columnsOptions: [4, 6, 8],
-    columnsIndex: 1,
+    // 练习模式（仅课程模式）
+    practiceMode: 'trace',
+    practiceModes: ['描红', '一字一空', '一字一空+额外空行'],
+    practiceModeLabels: ['描红', '一字一空', '一字一空+额外空行'],
     // 状态
     layoutData: null,
     generating: false,
     saving: false,
     canvasReady: false,
     tempFilePath: '',
+    lessonNo: 0,
   },
 
   // Canvas 相关
@@ -51,6 +51,12 @@ Page({
     }
     if (options.source) {
       data.sourceName = decodeURIComponent(options.source)
+    }
+    if (options.lessonNo) {
+      data.lessonNo = parseInt(options.lessonNo)
+      data.sourceType = 'course'
+    } else {
+      data.sourceType = 'daily'
     }
     // 接收字体和格子类型参数
     if (options.fontStyle) {
@@ -172,21 +178,12 @@ Page({
     this.setData({ gridType: type })
   },
 
-  // 字号选择
-  onFontSizeSelect(e) {
+  // 练习模式选择
+  onPracticeModeSelect(e) {
     const index = e.currentTarget.dataset.index
+    const modes = ['trace', 'one-empty', 'one-extra']
     this.setData({
-      fontSize: this.data.fontSizes[index],
-      fontSizeIndex: index
-    })
-  },
-
-  // 每行字数选择
-  onColumnsSelect(e) {
-    const index = e.currentTarget.dataset.index
-    this.setData({
-      columns: this.data.columnsOptions[index],
-      columnsIndex: index
+      practiceMode: modes[index]
     })
   },
 
@@ -216,36 +213,40 @@ Page({
 
   // 绘制字帖（核心方法）
   drawCopybook() {
-    const { text, gridType, fontSize, columns } = this.data
+    const { text, gridType, practiceMode, sourceType } = this.data
     if (!text || !text.trim()) return
 
     const ctx = this.ctx
     const canvas = this.canvas
     if (!ctx || !canvas) return
 
-    // 字号映射到格子大小（逻辑像素）
-    const gridSizeMap = { small: 40, medium: 55, large: 70 }
-    const gridSize = gridSizeMap[fontSize] || 55
+    // 根据来源类型设置格子规格
+    let gridSize, columns, rows
+    if (sourceType === 'course') {
+      // 课程模式：15mm×15mm，12字/行，15行/张
+      gridSize = 55  // 逻辑像素（约15mm）
+      columns = 12
+      rows = 15
+    } else {
+      // 每日素材模式：7.5mm×8.0mm，行间距1.5mm
+      gridSize = 28  // 逻辑像素（约7.5mm）
+      columns = Math.floor((canvas.width / this.dpr - 40) / gridSize)
+      rows = Math.floor((canvas.height / this.dpr - 40) / (gridSize + 6))
+    }
 
     // 过滤空白字符
     const chars = text.replace(/\s+/g, '').split('')
     const padding = 20
-    const rows = Math.ceil(chars.length / columns)
+    const actualRows = Math.ceil(chars.length / columns)
+    const displayRows = Math.min(actualRows, rows)
 
     // 设置 Canvas 尺寸（逻辑像素）
     const canvasW = padding * 2 + columns * gridSize
-    const canvasH = padding * 2 + rows * gridSize
+    const canvasH = padding * 2 + displayRows * (gridSize + (sourceType === 'daily' ? 6 : 0))
 
     canvas.width = canvasW * this.dpr
     canvas.height = canvasH * this.dpr
     ctx.scale(this.dpr, this.dpr)
-
-    // 设置 Canvas 的 CSS 尺寸（通过 style）
-    wx.createSelectorQuery()
-      .select('#copybookCanvas')
-      .boundingClientRect((rect) => {
-        // 不需要额外设置，WXML 中已设置 style
-      }).exec()
 
     // 清空画布
     ctx.clearRect(0, 0, canvasW, canvasH)
@@ -254,45 +255,20 @@ Page({
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, canvasW, canvasH)
 
-    // 1. 绘制格子
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        const x = padding + col * gridSize
-        const y = padding + row * gridSize
-        this.drawGrid(ctx, x, y, gridSize, gridType)
-      }
-    }
-
-    // 2. 绘制示范字（每个字后留一个空格子供练习）
-    const charSize = gridSize * 0.65
-    ctx.fillStyle = '#333333'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    // 使用自定义字体或默认字体
-    let fontFamily
-    if (this.data.fontStyle === '默认') {
-      fontFamily = 'serif'
+    // 绘制格子和文字
+    if (sourceType === 'course') {
+      this.drawCourseGrid(ctx, padding, gridSize, columns, displayRows, chars, practiceMode)
     } else {
-      fontFamily = `'${this.data.fontStyle}', serif`
-    }
-    ctx.font = `${charSize}px ${fontFamily}`
-
-    for (let i = 0; i < chars.length; i++) {
-      const row = Math.floor(i / columns)
-      const col = i % columns
-      const cx = padding + col * gridSize + gridSize / 2
-      const cy = padding + row * gridSize + gridSize / 2
-      ctx.fillStyle = '#333333'
-      ctx.fillText(chars[i], cx, cy)
+      this.drawDailyGrid(ctx, padding, gridSize, columns, displayRows, chars)
     }
 
-    // 保存布局数据用于后续操作
+    // 保存布局数据
     this.setData({
       layoutData: {
         width: canvasW,
         height: canvasH,
         gridSize: gridSize,
-        rows: rows,
+        rows: displayRows,
         columns: columns,
         chars: chars
       }
@@ -354,9 +330,199 @@ Page({
     }
   },
 
+  // 绘制课程模式格子
+  drawCourseGrid(ctx, padding, gridSize, columns, rows, chars, practiceMode) {
+    const charSize = gridSize * 0.65
+    let fontFamily
+    if (this.data.fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${this.data.fontStyle}', serif`
+    }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < columns; col++) {
+        const x = padding + col * gridSize
+        const y = padding + row * gridSize
+        const charIndex = row * columns + col
+
+        // 绘制格子
+        this.drawGrid(ctx, x, y, gridSize, this.data.gridType)
+
+        // 根据练习模式绘制文字
+        if (charIndex < chars.length) {
+          const cx = x + gridSize / 2
+          const cy = y + gridSize / 2
+
+          if (practiceMode === 'trace') {
+            // 描红模式：第一个字清楚，后面浅色
+            ctx.font = `${charSize}px ${fontFamily}`
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            if (col === 0 && row === 0) {
+              ctx.fillStyle = '#333333'
+            } else {
+              ctx.fillStyle = '#cccccc'
+            }
+            ctx.fillText(chars[charIndex], cx, cy)
+          } else if (practiceMode === 'one-empty') {
+            // 一字一空：第一个格子显示示范字，其他空格子
+            if (col === 0) {
+              ctx.font = `${charSize}px ${fontFamily}`
+              ctx.textAlign = 'center'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle = '#333333'
+              ctx.fillText(chars[charIndex], cx, cy)
+            }
+          } else if (practiceMode === 'one-extra') {
+            // 一字一空+额外空行：第一行第一个格子显示示范字，其他空格子
+            if (col === 0 && row % 2 === 0) {
+              ctx.font = `${charSize}px ${fontFamily}`
+              ctx.textAlign = 'center'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle = '#333333'
+              ctx.fillText(chars[charIndex], cx, cy)
+            }
+          }
+        }
+      }
+    }
+  },
+
+  // 绘制每日素材模式格子
+  drawDailyGrid(ctx, padding, gridSize, columns, rows, chars) {
+    const charSize = gridSize * 0.65
+    let fontFamily
+    if (this.data.fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${this.data.fontStyle}', serif`
+    }
+
+    const rowGap = 6  // 行间距（约1.5mm）
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < columns; col++) {
+        const x = padding + col * gridSize
+        const y = padding + row * (gridSize + rowGap)
+        const charIndex = row * columns + col
+
+        // 绘制格子（高考作文格子样式）
+        ctx.strokeStyle = '#d0d0d0'
+        ctx.lineWidth = 1
+        ctx.strokeRect(x, y, gridSize, gridSize)
+
+        // 绘制文字
+        if (charIndex < chars.length) {
+          const cx = x + gridSize / 2
+          const cy = y + gridSize / 2
+          ctx.font = `${charSize}px ${fontFamily}`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillStyle = '#333333'
+          ctx.fillText(chars[charIndex], cx, cy)
+        }
+      }
+    }
+  },
+
+  // 绘制 A4 课程模式格子
+  drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, rows, chars, practiceMode, fontStyle) {
+    const charSize = gridSize * 0.65
+    let fontFamily
+    if (fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${fontStyle}', serif`
+    }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < columns; col++) {
+        const x = offsetX + col * gridSize
+        const y = offsetY + row * gridSize
+        const charIndex = row * columns + col
+
+        // 绘制格子
+        this.drawGrid(ctx, x, y, gridSize, this.data.gridType)
+
+        // 根据练习模式绘制文字
+        if (charIndex < chars.length) {
+          const cx = x + gridSize / 2
+          const cy = y + gridSize / 2
+
+          if (practiceMode === 'trace') {
+            // 描红模式：第一个字清楚，后面浅色
+            ctx.font = `${charSize}px ${fontFamily}`
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+            if (col === 0 && row === 0) {
+              ctx.fillStyle = '#333333'
+            } else {
+              ctx.fillStyle = '#cccccc'
+            }
+            ctx.fillText(chars[charIndex], cx, cy)
+          } else if (practiceMode === 'one-empty') {
+            // 一字一空：第一个格子显示示范字，其他空格子
+            if (col === 0) {
+              ctx.font = `${charSize}px ${fontFamily}`
+              ctx.textAlign = 'center'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle = '#333333'
+              ctx.fillText(chars[charIndex], cx, cy)
+            }
+          } else if (practiceMode === 'one-extra') {
+            // 一字一空+额外空行：第一行第一个格子显示示范字，其他空格子
+            if (col === 0 && row % 2 === 0) {
+              ctx.font = `${charSize}px ${fontFamily}`
+              ctx.textAlign = 'center'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle = '#333333'
+              ctx.fillText(chars[charIndex], cx, cy)
+            }
+          }
+        }
+      }
+    }
+  },
+
+  // 绘制 A4 每日素材模式格子
+  drawA4DailyGrid(ctx, offsetX, offsetY, gridSize, columns, rows, chars, rowGap, fontStyle) {
+    const charSize = gridSize * 0.65
+    let fontFamily
+    if (fontStyle === '默认') {
+      fontFamily = 'serif'
+    } else {
+      fontFamily = `'${fontStyle}', serif`
+    }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < columns; col++) {
+        const x = offsetX + col * gridSize
+        const y = offsetY + row * (gridSize + rowGap)
+        const charIndex = row * columns + col
+
+        // 绘制格子（高考作文格子样式）
+        ctx.strokeStyle = '#d0d0d0'
+        ctx.lineWidth = 1
+        ctx.strokeRect(x, y, gridSize, gridSize)
+
+        // 绘制文字
+        if (charIndex < chars.length) {
+          const cx = x + gridSize / 2
+          const cy = y + gridSize / 2
+          ctx.font = `${charSize}px ${fontFamily}`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillStyle = '#333333'
+          ctx.fillText(chars[charIndex], cx, cy)
+        }
+      }
+    }
+  },
+
   // 绘制 A4 尺寸字帖（用于打印导出）
   drawA4Copybook() {
-    const { text, gridType, fontSize, columns, fontStyle } = this.data
+    const { text, gridType, fontStyle, practiceMode, sourceType } = this.data
     if (!text || !text.trim()) return
     if (!this.a4Canvas || !this.a4Ctx) return
 
@@ -372,9 +538,21 @@ Page({
     const availW = A4_W - MARGIN * 2
     const availH = A4_H - MARGIN * 2
 
-    // 根据列数和可用宽度计算格子大小
-    const gridSize = Math.floor(availW / columns)
-    const rows = Math.floor(availH / gridSize)
+    // 根据来源类型设置格子规格
+    let gridSize, columns, rows, rowGap
+    if (sourceType === 'course') {
+      // 课程模式：15mm×15mm，12字/行，15行/张
+      gridSize = Math.floor(availW / 12)
+      columns = 12
+      rows = 15
+      rowGap = 0
+    } else {
+      // 每日素材模式：7.5mm×8.0mm，行间距1.5mm
+      gridSize = Math.floor(availW / 24)  // 约7.5mm
+      columns = Math.floor(availW / gridSize)
+      rowGap = Math.floor(gridSize * 0.2)  // 约1.5mm
+      rows = Math.floor(availH / (gridSize + rowGap))
+    }
 
     // 过滤空白字符
     const chars = text.replace(/\s+/g, '').split('')
@@ -383,7 +561,7 @@ Page({
     const totalW = columns * gridSize
     const actualRows = Math.ceil(chars.length / columns)
     const displayRows = Math.min(actualRows, rows)
-    const totalH = displayRows * gridSize
+    const totalH = displayRows * (gridSize + rowGap)
     const offsetX = MARGIN + Math.floor((availW - totalW) / 2)
     const offsetY = MARGIN + Math.floor((availH - totalH) / 2)
 
@@ -392,35 +570,11 @@ Page({
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, A4_W, A4_H)
 
-    // 绘制格子
-    for (let row = 0; row < displayRows; row++) {
-      for (let col = 0; col < columns; col++) {
-        const x = offsetX + col * gridSize
-        const y = offsetY + row * gridSize
-        this.drawGrid(ctx, x, y, gridSize, gridType)
-      }
-    }
-
-    // 绘制示范字
-    const charSize = gridSize * 0.65
-    ctx.fillStyle = '#333333'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    let fontFamily
-    if (fontStyle === '默认') {
-      fontFamily = 'serif'
+    // 绘制格子和文字
+    if (sourceType === 'course') {
+      this.drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, displayRows, chars, practiceMode, fontStyle)
     } else {
-      fontFamily = `'${fontStyle}', serif`
-    }
-    ctx.font = `${charSize}px ${fontFamily}`
-
-    for (let i = 0; i < chars.length && Math.floor(i / columns) < rows; i++) {
-      const row = Math.floor(i / columns)
-      const col = i % columns
-      const cx = offsetX + col * gridSize + gridSize / 2
-      const cy = offsetY + row * gridSize + gridSize / 2
-      ctx.fillStyle = '#333333'
-      ctx.fillText(chars[i], cx, cy)
+      this.drawA4DailyGrid(ctx, offsetX, offsetY, gridSize, columns, displayRows, chars, rowGap, fontStyle)
     }
   },
 
@@ -455,13 +609,31 @@ Page({
       // 2. 保存到相册
       await this.saveToAlbum(tempFilePath)
 
+      // 如果是课程模式，标记课程完成
+      if (this.data.lessonNo > 0) {
+        try {
+          const completeRes = await copybookService.completeCourseLesson(this.data.lessonNo)
+          if (completeRes && completeRes.code === 0) {
+            if (completeRes.data && completeRes.data.justUnlocked) {
+              wx.showModal({
+                title: '恭喜！',
+                content: '你已完成全部课程，每日素材已解锁！',
+                showCancel: false
+              })
+            }
+          }
+        } catch (err) {
+          console.warn('标记课程完成失败:', err)
+        }
+      }
+
       // 3. 调用云函数保存生成记录
       await copybookService.generateCopybook({
         text: this.data.text,
         fontStyle: this.data.fontStyle,
         gridType: this.data.gridType,
-        fontSize: this.data.fontSize,
-        columns: this.data.columns,
+        sourceType: this.data.sourceType,
+        practiceMode: this.data.practiceMode,
         articleId: this.data.articleId
       })
 
@@ -523,8 +695,8 @@ Page({
         text: this.data.text,
         fontStyle: this.data.fontStyle,
         gridType: this.data.gridType,
-        fontSize: this.data.fontSize,
-        columns: this.data.columns,
+        sourceType: this.data.sourceType,
+        practiceMode: this.data.practiceMode,
         articleId: this.data.articleId
       })
 
@@ -539,5 +711,24 @@ Page({
     } finally {
       this.setData({ generating: false })
     }
+  },
+
+  // 预览大图
+  previewImage() {
+    if (!this.data.layoutData) return
+
+    // 先绘制 A4 尺寸字帖
+    this.drawA4Copybook()
+
+    // 导出为临时文件
+    this.a4CanvasToTempFile().then(tempFilePath => {
+      wx.previewImage({
+        urls: [tempFilePath],
+        current: tempFilePath
+      })
+    }).catch(err => {
+      console.error('预览失败:', err)
+      wx.showToast({ title: '预览失败', icon: 'none' })
+    })
   }
 })

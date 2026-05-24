@@ -38,30 +38,21 @@ Page({
     const { year, month } = this.data
 
     try {
-      // 并行请求月度记录和统计数据
-      const [monthRes, statsRes] = await Promise.all([
-        callAPI('getRecords', { type: 'month', year, month }),
-        callAPI('getRecords', { type: 'stats', year, month })
-      ])
+      // getMonthRecords 已返回所有需要的数据，无需额外调用 stats
+      const monthRes = await callAPI('getRecords', { type: 'month', year, month })
 
-      // 处理月度打卡记录
+      // 处理月度打卡记录和统计数据
       let records = []
-      if (monthRes && monthRes.code === 0) {
-        const checkedDates = monthRes.data.checkedDates || []
-        records = this.buildRecordsFromChecked(year, month, checkedDates)
-      }
-
-      // 处理统计数据
       let monthCheckins = 0
       let completionRate = 0
       let avgScore = 0
       let streakDays = 0
-      if (statsRes && statsRes.code === 0) {
-        monthCheckins = statsRes.data.monthCheckins || 0
-        avgScore = statsRes.data.avgScore || 0
-        streakDays = statsRes.data.streakDays || 0
-        const totalDays = statsRes.data.monthTotalDays || new Date(year, month, 0).getDate()
-        completionRate = totalDays > 0 ? Math.round(monthCheckins / totalDays * 100) : 0
+      if (monthRes && monthRes.code === 0) {
+        const checkedDates = monthRes.data.checkedDates || []
+        records = this.buildRecordsFromChecked(year, month, checkedDates)
+        monthCheckins = monthRes.data.monthCheckins || 0
+        avgScore = monthRes.data.avgScore || 0
+        streakDays = monthRes.data.streakDays || 0
       }
 
       // 计算当月应完成天数（截至今天，未来日期不算）
@@ -70,6 +61,7 @@ Page({
       const monthTotalDays = isCurrentMonth
         ? now.getDate()
         : new Date(year, month, 0).getDate()
+      completionRate = monthTotalDays > 0 ? Math.round(monthCheckins / monthTotalDays * 100) : 0
 
       this.setData({
         records,

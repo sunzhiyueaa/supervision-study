@@ -5,6 +5,11 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+// 云函数内的配置（云函数无法require前端文件，需单独维护）
+const MODE = 'dev' // 'dev' | 'prod' — 部署前改为 'prod'
+const REQUIRED_LESSONS = 37
+const REQUIRED_POINTS = 500
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
@@ -46,6 +51,8 @@ exports.main = async (event, context) => {
       case 'updateSubscribeDate':
         // 更新用户订阅日期
         return await updateSubscribeDate(openid, event)
+      case 'course_complete':
+        return await completeCourseLesson(openid, event)
       default:
         return { code: -1, message: '未知记录类型' }
     }
@@ -490,4 +497,68 @@ async function updateSubscribeDate(openid, event) {
   })
 
   return { code: 0, message: '订阅日期已更新', data: null }
+}
+
+// 标记课程完成
+async function completeCourseLesson(openid, event) {
+  const { lessonNo } = event
+
+  if (!lessonNo || lessonNo < 1 || lessonNo > 37) {
+    return { code: -1, message: '无效的课号', data: null }
+  }
+
+  // 获取用户信息
+  const userRes = await db.collection('users').where({ openid }).get()
+  if (userRes.data.length === 0) {
+    return { code: -1, message: '用户不存在', data: null }
+  }
+
+  const user = userRes.data[0]
+  const progress = user.courseProgress || {
+    currentLesson: 1,
+    completedLessons: [],
+    dailyUnlocked: false
+  }
+
+  // dev模式：跳过顺序检查
+  if (MODE !== 'dev') {
+    // 验证只能完成当前课
+    if (lessonNo !== progress.currentLesson) {
+      return { code: -1, message: '请按顺序完成课程', data: null }
+    }
+  }
+
+  // 检查是否已完成
+  if (progress.completedLessons.includes(lessonNo)) {
+    return { code: -1, message: '该课程已完成', data: null }
+  }
+
+  // 更新进度
+  const newCompletedLessons = [...progress.completedLessons, lessonNo].sort((a, b) => a - b)
+  const newCurrentLesson = Math.max(...newCompletedLessons) + 1
+
+  // 检查解锁条件
+  const totalPoints = user.totalPoints || 0
+  const allCompleted = newCompletedLessons.length >= REQUIRED_LESSONS
+  const pointsEnough = totalPoints >= REQUIRED_POINTS
+  const dailyUnlocked = allCompleted && pointsEnough
+
+  const newProgress = {
+    currentLesson: newCurrentLesson,
+    completedLessons: newCompletedLessons,
+    dailyUnlocked: progress.dailyUnlocked || dailyUnlocked
+  }
+
+  await db.collection('users').where({ openid }).update({
+    data: { courseProgress: newProgress }
+  })
+
+  return {
+    code: 0,
+    message: dailyUnlocked && !progress.dailyUnlocked ? '恭喜！每日素材已解锁' : '课程完成',
+    data: {
+      ...newProgress,
+      justUnlocked: dailyUnlocked && !progress.dailyUnlocked
+    }
+  }
 }

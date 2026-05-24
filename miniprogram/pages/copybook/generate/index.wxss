@@ -243,6 +243,7 @@
   overflow: hidden;
   min-height: 600rpx;
   border: 2rpx solid #f0f0f0;
+  cursor: pointer;
 }
 
 .copybook-canvas {
@@ -264,6 +265,22 @@
 .preview-empty-text {
   font-size: 28rpx;
   color: #ccc;
+}
+
+.preview-hint {
+  position: absolute;
+  bottom: 20rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+.preview-hint-text {
+  font-size: 24rpx;
+  color: #999;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
 }
 
 /* ========== A4打印画布（隐藏） ========== */

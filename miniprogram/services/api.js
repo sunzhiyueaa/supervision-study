@@ -1,8 +1,10 @@
 // services/api.js - 统一API层
 // 当前使用云开发，后续可切换为独立后端
 
+const appConfig = require('../config')
+
 const config = {
-  env: 'cloud', // 'cloud' | 'server'
+  env: appConfig.env,
   baseUrl: ''   // 独立后端时使用
 }
 
@@ -74,4 +76,4 @@ function getAchievements() {
   return callAPI('getPoints', { type: 'achievements' })
 }
 
-module.exports = { callAPI, config, getPointsSummary, getPointsHistory, getAchievements }
+module.exports = { callAPI, config, appConfig, getPointsSummary, getPointsHistory, getAchievements }
