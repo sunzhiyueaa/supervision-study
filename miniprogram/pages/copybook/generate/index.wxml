@@ -1,12 +1,21 @@
 <!-- pages/copybook/generate/index.wxml - 字帖生成 -->
 <view class="container">
-  <!-- 文本内容编辑 -->
-  <view class="card">
+  <!-- 要点提示卡片（仅课程模式） -->
+  <view class="card tips-card" wx:if="{{sourceType === 'course' && tips}}">
+    <view class="tips-header">
+      <text class="tips-icon">📝</text>
+      <text class="tips-title">书写要点</text>
+    </view>
+    <text class="tips-content">{{tips}}</text>
+  </view>
+
+  <!-- 文本内容编辑（仅每日素材模式） -->
+  <view class="card" wx:if="{{sourceType === 'daily'}}">
     <view class="section-header">
       <text class="section-title">练字内容</text>
       <text class="source-label" wx:if="{{sourceName}}">{{sourceName}}</text>
     </view>
-    <textarea class="text-editor" value="{{text}}" bindinput="onTextInput" 
+    <textarea class="text-editor" value="{{text}}" bindinput="onTextInput"
               placeholder="请输入要练字的内容" maxlength="200" auto-height />
     <view class="text-counter">
       <text class="counter-text">{{text.length}}/200</text>

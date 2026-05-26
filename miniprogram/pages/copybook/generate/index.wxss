@@ -292,6 +292,36 @@
   height: 3508px;
 }
 
+/* ========== 要点提示卡片 ========== */
+.tips-card {
+  background-color: #f6f8fa;
+  border-left: 6rpx solid #1890ff;
+  padding: 24rpx;
+}
+
+.tips-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.tips-icon {
+  font-size: 28rpx;
+  margin-right: 8rpx;
+}
+
+.tips-title {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.tips-content {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
 /* ========== 操作按钮 ========== */
 .btn-group {
   padding-bottom: 60rpx;

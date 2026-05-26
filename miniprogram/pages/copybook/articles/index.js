@@ -189,10 +189,9 @@ Page({
       return
     }
 
-    // 课程内容：书写要点 + 示范字
-    const content = lesson.tips + '\n\n示范字：' + lesson.demoChars
+    // content 只传练习字，tips 单独传递
     wx.navigateTo({
-      url: `/pages/copybook/generate/index?content=${encodeURIComponent(content)}&source=${encodeURIComponent('第' + lesson.lessonNo + '课：' + lesson.title)}&lessonNo=${lesson.lessonNo}`
+      url: `/pages/copybook/generate/index?content=${encodeURIComponent(lesson.practiceChars)}&tips=${encodeURIComponent(lesson.tips)}&source=${encodeURIComponent('第' + lesson.lessonNo + '课：' + lesson.title)}&lessonNo=${lesson.lessonNo}`
     })
   },
 

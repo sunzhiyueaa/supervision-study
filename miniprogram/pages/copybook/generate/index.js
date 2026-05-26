@@ -2,6 +2,15 @@
 // 使用 Canvas 2D API 实时渲染字帖，支持保存到相册和收藏
 const copybookService = require('../../../services/copybook')
 
+// 解析练习字：阶段1-4用顿号分隔，阶段5为连续文本
+function parsePracticeChars(practiceChars) {
+  if (!practiceChars) return []
+  if (practiceChars.includes('、')) {
+    return practiceChars.split('、').filter(c => c.trim())
+  }
+  return practiceChars.split('')
+}
+
 Page({
   data: {
     // 文本内容
@@ -27,6 +36,7 @@ Page({
     canvasReady: false,
     tempFilePath: '',
     lessonNo: 0,
+    tips: '',
   },
 
   // Canvas 相关
@@ -71,6 +81,9 @@ Page({
       if (this.data.gridTypes.indexOf(decoded) > -1) {
         data.gridType = decoded
       }
+    }
+    if (options.tips) {
+      data.tips = decodeURIComponent(options.tips)
     }
     if (Object.keys(data).length > 0) {
       this.setData(data)
@@ -221,28 +234,27 @@ Page({
     if (!ctx || !canvas) return
 
     // 根据来源类型设置格子规格
-    let gridSize, columns, rows
+    let gridSize, columns, fixedRows
     if (sourceType === 'course') {
-      // 课程模式：15mm×15mm，12字/行，15行/张
-      gridSize = 55  // 逻辑像素（约15mm）
+      // 课程模式：15mm×15mm，12字/行，固定15行
+      gridSize = 55
       columns = 12
-      rows = 15
+      fixedRows = 15
     } else {
       // 每日素材模式：7.5mm×8.0mm，行间距1.5mm
-      gridSize = 28  // 逻辑像素（约7.5mm）
+      gridSize = 28
       columns = Math.floor((canvas.width / this.dpr - 40) / gridSize)
-      rows = Math.floor((canvas.height / this.dpr - 40) / (gridSize + 6))
+      fixedRows = Math.floor((canvas.height / this.dpr - 40) / (gridSize + 6))
     }
 
-    // 过滤空白字符
-    const chars = text.replace(/\s+/g, '').split('')
     const padding = 20
-    const actualRows = Math.ceil(chars.length / columns)
-    const displayRows = Math.min(actualRows, rows)
+
+    // 课程模式：额外空行需要额外高度
+    const extraRowHeight = (sourceType === 'course' && practiceMode === 'one-extra') ? gridSize : 0
 
     // 设置 Canvas 尺寸（逻辑像素）
     const canvasW = padding * 2 + columns * gridSize
-    const canvasH = padding * 2 + displayRows * (gridSize + (sourceType === 'daily' ? 6 : 0))
+    const canvasH = padding * 2 + fixedRows * gridSize + (sourceType === 'daily' ? fixedRows * 6 : 0) + extraRowHeight
 
     canvas.width = canvasW * this.dpr
     canvas.height = canvasH * this.dpr
@@ -257,9 +269,11 @@ Page({
 
     // 绘制格子和文字
     if (sourceType === 'course') {
-      this.drawCourseGrid(ctx, padding, gridSize, columns, displayRows, chars, practiceMode)
+      const chars = parsePracticeChars(text)
+      this.drawCourseGrid(ctx, padding, gridSize, columns, chars, practiceMode)
     } else {
-      this.drawDailyGrid(ctx, padding, gridSize, columns, displayRows, chars)
+      const chars = text.replace(/\s+/g, '').split('')
+      this.drawDailyGrid(ctx, padding, gridSize, columns, fixedRows, chars)
     }
 
     // 保存布局数据
@@ -268,9 +282,8 @@ Page({
         width: canvasW,
         height: canvasH,
         gridSize: gridSize,
-        rows: displayRows,
-        columns: columns,
-        chars: chars
+        rows: fixedRows,
+        columns: columns
       }
     })
   },
@@ -331,7 +344,7 @@ Page({
   },
 
   // 绘制课程模式格子
-  drawCourseGrid(ctx, padding, gridSize, columns, rows, chars, practiceMode) {
+  drawCourseGrid(ctx, padding, gridSize, columns, chars, practiceMode) {
     const charSize = gridSize * 0.65
     let fontFamily
     if (this.data.fontStyle === '默认') {
@@ -340,51 +353,43 @@ Page({
       fontFamily = `'${this.data.fontStyle}', serif`
     }
 
-    for (let row = 0; row < rows; row++) {
+    const fixedRows = 15
+
+    for (let row = 0; row < fixedRows; row++) {
+      const charIndex = row % chars.length
+
       for (let col = 0; col < columns; col++) {
         const x = padding + col * gridSize
         const y = padding + row * gridSize
-        const charIndex = row * columns + col
 
         // 绘制格子
         this.drawGrid(ctx, x, y, gridSize, this.data.gridType)
 
-        // 根据练习模式绘制文字
-        if (charIndex < chars.length) {
-          const cx = x + gridSize / 2
-          const cy = y + gridSize / 2
+        const cx = x + gridSize / 2
+        const cy = y + gridSize / 2
+        ctx.font = `${charSize}px ${fontFamily}`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
 
-          if (practiceMode === 'trace') {
-            // 描红模式：第一个字清楚，后面浅色
-            ctx.font = `${charSize}px ${fontFamily}`
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
-            if (col === 0 && row === 0) {
-              ctx.fillStyle = '#333333'
-            } else {
-              ctx.fillStyle = '#cccccc'
-            }
-            ctx.fillText(chars[charIndex], cx, cy)
-          } else if (practiceMode === 'one-empty') {
-            // 一字一空：第一个格子显示示范字，其他空格子
-            if (col === 0) {
-              ctx.font = `${charSize}px ${fontFamily}`
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'middle'
-              ctx.fillStyle = '#333333'
-              ctx.fillText(chars[charIndex], cx, cy)
-            }
-          } else if (practiceMode === 'one-extra') {
-            // 一字一空+额外空行：第一行第一个格子显示示范字，其他空格子
-            if (col === 0 && row % 2 === 0) {
-              ctx.font = `${charSize}px ${fontFamily}`
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'middle'
-              ctx.fillStyle = '#333333'
-              ctx.fillText(chars[charIndex], cx, cy)
-            }
-          }
+        if (col === 0) {
+          // 第一格：深色示范字
+          ctx.fillStyle = '#333333'
+          ctx.fillText(chars[charIndex], cx, cy)
+        } else if (practiceMode === 'trace') {
+          // 描红模式：后续格子画浅色描红字
+          ctx.fillStyle = '#cccccc'
+          ctx.fillText(chars[charIndex], cx, cy)
         }
+        // one-empty / one-extra：后续格子留空
+      }
+    }
+
+    // one-extra 模式：在15行之后额外加一行空格子
+    if (practiceMode === 'one-extra') {
+      const extraY = padding + fixedRows * gridSize
+      for (let col = 0; col < columns; col++) {
+        const x = padding + col * gridSize
+        this.drawGrid(ctx, x, extraY, gridSize, this.data.gridType)
       }
     }
   },
@@ -427,7 +432,7 @@ Page({
   },
 
   // 绘制 A4 课程模式格子
-  drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, rows, chars, practiceMode, fontStyle) {
+  drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, chars, practiceMode, fontStyle) {
     const charSize = gridSize * 0.65
     let fontFamily
     if (fontStyle === '默认') {
@@ -436,51 +441,40 @@ Page({
       fontFamily = `'${fontStyle}', serif`
     }
 
-    for (let row = 0; row < rows; row++) {
+    const fixedRows = 15
+
+    for (let row = 0; row < fixedRows; row++) {
+      const charIndex = row % chars.length
+
       for (let col = 0; col < columns; col++) {
         const x = offsetX + col * gridSize
         const y = offsetY + row * gridSize
-        const charIndex = row * columns + col
 
         // 绘制格子
         this.drawGrid(ctx, x, y, gridSize, this.data.gridType)
 
-        // 根据练习模式绘制文字
-        if (charIndex < chars.length) {
-          const cx = x + gridSize / 2
-          const cy = y + gridSize / 2
+        const cx = x + gridSize / 2
+        const cy = y + gridSize / 2
+        ctx.font = `${charSize}px ${fontFamily}`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
 
-          if (practiceMode === 'trace') {
-            // 描红模式：第一个字清楚，后面浅色
-            ctx.font = `${charSize}px ${fontFamily}`
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
-            if (col === 0 && row === 0) {
-              ctx.fillStyle = '#333333'
-            } else {
-              ctx.fillStyle = '#cccccc'
-            }
-            ctx.fillText(chars[charIndex], cx, cy)
-          } else if (practiceMode === 'one-empty') {
-            // 一字一空：第一个格子显示示范字，其他空格子
-            if (col === 0) {
-              ctx.font = `${charSize}px ${fontFamily}`
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'middle'
-              ctx.fillStyle = '#333333'
-              ctx.fillText(chars[charIndex], cx, cy)
-            }
-          } else if (practiceMode === 'one-extra') {
-            // 一字一空+额外空行：第一行第一个格子显示示范字，其他空格子
-            if (col === 0 && row % 2 === 0) {
-              ctx.font = `${charSize}px ${fontFamily}`
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'middle'
-              ctx.fillStyle = '#333333'
-              ctx.fillText(chars[charIndex], cx, cy)
-            }
-          }
+        if (col === 0) {
+          ctx.fillStyle = '#333333'
+          ctx.fillText(chars[charIndex], cx, cy)
+        } else if (practiceMode === 'trace') {
+          ctx.fillStyle = '#cccccc'
+          ctx.fillText(chars[charIndex], cx, cy)
         }
+      }
+    }
+
+    // one-extra 模式额外空行
+    if (practiceMode === 'one-extra') {
+      const extraY = offsetY + fixedRows * gridSize
+      for (let col = 0; col < columns; col++) {
+        const x = offsetX + col * gridSize
+        this.drawGrid(ctx, x, extraY, gridSize, this.data.gridType)
       }
     }
   },
@@ -554,13 +548,18 @@ Page({
       rows = Math.floor(availH / (gridSize + rowGap))
     }
 
-    // 过滤空白字符
-    const chars = text.replace(/\s+/g, '').split('')
+    // 解析字符
+    let chars
+    if (sourceType === 'course') {
+      chars = parsePracticeChars(text)
+    } else {
+      chars = text.replace(/\s+/g, '').split('')
+    }
 
     // 居中偏移
     const totalW = columns * gridSize
     const actualRows = Math.ceil(chars.length / columns)
-    const displayRows = Math.min(actualRows, rows)
+    const displayRows = sourceType === 'course' ? 15 : Math.min(actualRows, rows)
     const totalH = displayRows * (gridSize + rowGap)
     const offsetX = MARGIN + Math.floor((availW - totalW) / 2)
     const offsetY = MARGIN + Math.floor((availH - totalH) / 2)
@@ -572,7 +571,7 @@ Page({
 
     // 绘制格子和文字
     if (sourceType === 'course') {
-      this.drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, displayRows, chars, practiceMode, fontStyle)
+      this.drawA4CourseGrid(ctx, offsetX, offsetY, gridSize, columns, chars, practiceMode, fontStyle)
     } else {
       this.drawA4DailyGrid(ctx, offsetX, offsetY, gridSize, columns, displayRows, chars, rowGap, fontStyle)
     }
