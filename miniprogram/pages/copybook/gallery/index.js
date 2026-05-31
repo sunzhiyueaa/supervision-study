@@ -1,6 +1,7 @@
 // pages/copybook/gallery/index.js - 已生成字帖
 const copybookService = require('../../../services/copybook')
 const { formatDate } = require('../../../utils/date')
+const logger = require('../../../utils/logger')
 
 Page({
   data: {
@@ -15,6 +16,7 @@ Page({
   },
 
   onShow() {
+    logger.info('访问字帖收藏页')
     // 每次显示时刷新，以获取最新数据
     this.setData({ page: 1, hasMore: true })
     this.loadGallery()
@@ -52,6 +54,7 @@ Page({
       }
     } catch (err) {
       console.error('加载字帖列表失败', err)
+      logger.error('加载收藏失败', { err: err.message || err })
     } finally {
       this.setData({ loading: false })
     }
@@ -75,6 +78,7 @@ Page({
       }
     } catch (err) {
       console.error('加载更多失败', err)
+      logger.error('加载收藏失败', { err: err.message || err })
     } finally {
       this.setData({ loading: false })
     }
@@ -164,6 +168,7 @@ Page({
       this.setData({ copybooks })
     } catch (err) {
       console.error('删除失败:', err)
+      logger.error('加载收藏失败', { err: err.message || err })
       wx.showToast({ title: '删除失败', icon: 'none' })
     }
   }

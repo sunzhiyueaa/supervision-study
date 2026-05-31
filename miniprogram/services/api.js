@@ -2,6 +2,7 @@
 // 当前使用云开发，后续可切换为独立后端
 
 const appConfig = require('../config')
+const logger = require('../utils/logger')
 
 const config = {
   env: appConfig.env,
@@ -22,6 +23,7 @@ function callAPI(name, data) {
     }).then(res => {
       return res.result
     }).catch(err => {
+      logger.error('云函数调用失败', { func: name, err: err.message })
       console.error(`云函数调用失败 [${name}]:`, err)
       throw err
     })

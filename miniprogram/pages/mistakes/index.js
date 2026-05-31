@@ -1,6 +1,7 @@
 // pages/mistakes/index.js - 错题本记录页
 const { callAPI } = require('../../services/api')
 const { formatDate, getToday } = require('../../utils/date')
+const logger = require('../../utils/logger')
 
 // 科目列表
 const SUBJECTS = ['全部', '语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理']
@@ -49,6 +50,7 @@ Page({
   },
 
   onShow() {
+    logger.info('访问错题页')
     this.loadMistakes()
   },
 
@@ -233,6 +235,7 @@ Page({
 
       wx.hideLoading()
       if (res && res.code === 0) {
+        logger.info('保存错题成功')
         wx.showToast({ title: '保存成功', icon: 'success' })
         this.setData({ showAddModal: false })
         this.loadMistakes()
@@ -241,6 +244,7 @@ Page({
       }
     } catch (err) {
       wx.hideLoading()
+      logger.error('保存错题失败', { err: err.message || err })
       console.error('保存错题失败', err)
       wx.showToast({ title: '保存失败，请重试', icon: 'none' })
     }

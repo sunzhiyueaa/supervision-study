@@ -1,18 +1,25 @@
 // config.js - 全局配置
-const config = {
-  // 云环境：'cloud' | 'server'
-  env: 'cloud',
-
-  // 运行模式：'dev' | 'prod'
-  // dev: 跳过解锁验证，所有课程和每日素材直接可用（方便测试）
-  // prod: 正常解锁逻辑
-  mode: 'dev',
-
-  // 每日素材解锁门槛
-  unlock: {
-    requiredLessons: 37,    // 需完成全部37课
-    requiredPoints: 500     // 需要500积分
+const envs = {
+  dev: {
+    cloudEnv: 'cloud1-d9ggmhuqye1b0cb43',  // 开发环境
+    mode: 'dev',
+  },
+  prod: {
+    cloudEnv: 'supervision-prod',           // 生产环境
+    mode: 'prod',
   }
 }
 
-module.exports = config
+const currentEnv = 'dev'  // 上线时改为 'prod'
+
+const envConfig = envs[currentEnv]
+
+module.exports = {
+  env: 'cloud',
+  cloudEnv: envConfig.cloudEnv,
+  mode: envConfig.mode,
+  unlock: {
+    requiredLessons: 37,
+    requiredPoints: 500
+  }
+}

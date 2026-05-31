@@ -2,6 +2,7 @@
 const { callAPI, getPointsSummary, getPointsHistory } = require('../../services/api')
 const { getUserInfo } = require('../../utils/auth')
 const { formatDate } = require('../../utils/date')
+const logger = require('../../utils/logger')
 
 Page({
   data: {
@@ -22,6 +23,7 @@ Page({
   },
 
   onShow() {
+    logger.info('访问积分页')
     this.loadAllData()
   },
 
@@ -70,6 +72,7 @@ Page({
       this.setData({ page: 1, pointsLog: [], hasMore: true })
       this.loadPointsHistory()
     } catch (err) {
+      logger.error('加载积分数据失败', { err: err.message || err })
       console.error('加载积分数据失败', err)
     }
   },

@@ -2,6 +2,7 @@
 const { callAPI } = require('../../services/api')
 const { checkLogin } = require('../../utils/auth')
 const { formatDate, getWeekday, getWeekDays } = require('../../utils/date')
+const logger = require('../../utils/logger')
 
 // 订阅消息模板ID占位符（需在微信后台申请后替换）
 const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
@@ -25,6 +26,7 @@ Page({
   },
 
   onShow() {
+    logger.info('访问首页')
     // 每次显示刷新数据（从打卡页返回时更新状态）
     this.loadDashboard()
     // 检查是否需要引导订阅
@@ -57,6 +59,7 @@ Page({
       this.loadDashboard()
     } catch (err) {
       console.error('初始化页面失败', err)
+      logger.error('首页加载失败', { err: err.message || err })
     }
   },
 
@@ -84,6 +87,7 @@ Page({
       }
     }).catch(err => {
       console.error('加载仪表盘数据失败', err)
+      logger.error('首页加载失败', { err: err.message || err })
       wx.showToast({ title: '加载失败', icon: 'none' })
       this.setData({ loading: false })
     })

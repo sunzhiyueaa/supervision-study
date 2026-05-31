@@ -1,6 +1,7 @@
 // pages/copybook/articles/index.js - 素材文章列表（课程 + 每日素材）
 const copybookService = require('../../../services/copybook')
 const appConfig = require('../../../config')
+const logger = require('../../../utils/logger')
 
 // 阶段名称映射
 const STAGE_NAMES = {
@@ -36,6 +37,7 @@ Page({
   },
 
   onShow() {
+    logger.info('访问字帖素材页')
     if (this.data.initialized) {
       this.refreshProgress()
     }
@@ -78,6 +80,7 @@ Page({
       }
     } catch (err) {
       console.error('加载数据失败:', err)
+      logger.error('加载素材失败', { err: err.message || err })
       wx.showToast({ title: '加载失败', icon: 'none' })
     } finally {
       this.setData({ loading: false })
@@ -95,6 +98,7 @@ Page({
       }
     } catch (err) {
       console.error('刷新进度失败', err)
+      logger.error('加载素材失败', { err: err.message || err })
     }
   },
 
@@ -157,6 +161,7 @@ Page({
       }
     } catch (err) {
       console.error('加载每日素材失败:', err)
+      logger.error('加载素材失败', { err: err.message || err })
     } finally {
       this.setData({ dailyLoading: false })
     }
@@ -178,6 +183,7 @@ Page({
       }
     } catch (err) {
       console.error('触发生成每日素材失败:', err)
+      logger.error('加载素材失败', { err: err.message || err })
     }
   },
 

@@ -1,6 +1,7 @@
 // pages/checkin/index.js - 练字打卡页
 const { callAPI } = require('../../services/api')
 const { formatDate } = require('../../utils/date')
+const logger = require('../../utils/logger')
 
 // 订阅消息模板ID
 const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
@@ -38,6 +39,10 @@ Page({
 
     // 检查今日是否已订阅
     this.checkTodaySubscribed()
+  },
+
+  onShow() {
+    logger.info('访问签到页')
   },
 
   // 加载今日打卡记录
@@ -127,6 +132,7 @@ Page({
       })
 
       if (res && res.code === 0) {
+        logger.info('签到成功')
         // 显示 confetti 庆祝动画
         this.setData({ showConfetti: true })
         setTimeout(() => {
@@ -147,6 +153,7 @@ Page({
       }
     } catch (err) {
       console.error('提交打卡失败', err)
+      logger.error('签到失败', { err: err.message || err })
       wx.showToast({ title: '提交失败，请重试', icon: 'none' })
     } finally {
       this.setData({ uploading: false, uploadProgress: 0 })
@@ -194,6 +201,7 @@ Page({
     } catch (err) {
       wx.hideLoading()
       console.error('获取评分失败', err)
+      logger.error('获取评分失败', { err: err.message || err })
       wx.showToast({ title: '评分失败，稍后重试', icon: 'none' })
     }
   },

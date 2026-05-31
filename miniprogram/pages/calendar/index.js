@@ -1,6 +1,7 @@
 // pages/calendar/index.js - 日历记录+统计
 const { callAPI } = require('../../services/api')
 const { formatDate } = require('../../utils/date')
+const logger = require('../../utils/logger')
 
 Page({
   data: {
@@ -30,6 +31,10 @@ Page({
       month: now.getMonth() + 1
     })
     this.loadMonthData()
+  },
+
+  onShow() {
+    logger.info('访问日历页')
   },
 
   // 加载月份数据（打卡状态 + 统计）
@@ -77,6 +82,7 @@ Page({
       })
     } catch (err) {
       console.error('加载月份数据失败', err)
+      logger.error('加载月度数据失败', { err: err.message || err })
       this.setData({ loading: false })
     }
   },

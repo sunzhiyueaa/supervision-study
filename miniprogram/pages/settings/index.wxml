@@ -51,11 +51,17 @@
   <view class="card mt-20">
     <text class="section-title">个人信息</text>
     <view class="setting-row flex-between">
-      <text class="setting-label">昵称</text>
-      <text class="setting-value">{{userInfo.nickname || '未设置'}}</text>
+      <text class="setting-label">头像</text>
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <view class="avatar-row">
+          <image class="avatar-img" src="{{userInfo.avatar || '/images/tab-me-active.png'}}" mode="aspectFill" />
+          <text class="setting-arrow">›</text>
+        </view>
+      </button>
     </view>
-    <view class="setting-row" bindtap="editNickname">
-      <text class="setting-label">修改昵称</text>
+    <view class="setting-row flex-between">
+      <text class="setting-label">昵称</text>
+      <input class="nickname-input" type="nickname" value="{{userInfo.nickname}}" placeholder="点击输入昵称" bindblur="onNicknameBlur" />
     </view>
   </view>
 

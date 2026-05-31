@@ -33,6 +33,47 @@
   color: #999;
 }
 
+.nickname-input {
+  font-size: 28rpx;
+  color: #333;
+  text-align: right;
+  flex: 1;
+}
+
+/* 头像按钮 */
+.avatar-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  font-size: inherit;
+  border-radius: 0;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
+/* 头像 */
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.avatar-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f0f0f0;
+}
+
+.setting-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+}
+
 /* 时间选择器 */
 .time-picker {
   display: flex;

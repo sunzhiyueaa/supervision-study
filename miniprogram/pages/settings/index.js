@@ -1,6 +1,7 @@
 // pages/settings/index.js - 设置页
 const { callAPI } = require('../../services/api')
 const { getUserInfo } = require('../../utils/auth')
+const logger = require('../../utils/logger')
 
 // 订阅消息模板ID占位符（需在微信后台申请后替换）
 const TEMPLATE_ID_REMINDER = 'wUNI9FwYhbLe5rwqn9PdlPdbOPyLG2_GcX_LfzEBGrU'
@@ -22,6 +23,10 @@ Page({
 
   onLoad() {
     this.loadSettings()
+  },
+
+  onShow() {
+    logger.info('访问设置页')
   },
 
   // 加载设置
@@ -122,35 +127,59 @@ Page({
     this.requestSubscribe()
   },
 
-  // 修改昵称
-  editNickname() {
-    wx.showModal({
-      title: '修改昵称',
-      editable: true,
-      placeholderText: '请输入新昵称',
-      success: async (res) => {
-        if (res.confirm && res.content) {
-          try {
-            await callAPI('submitRecord', {
-              type: 'updateProfile',
-              nickname: res.content
-            })
-            this.setData({ 'userInfo.nickname': res.content })
+  // 昵称输入失焦
+  async onNicknameBlur(e) {
+    const nickname = e.detail.value
+    if (!nickname || nickname === this.data.userInfo.nickname) return
+    try {
+      await callAPI('submitRecord', {
+        type: 'updateProfile',
+        nickname: nickname
+      })
+      this.setData({ 'userInfo.nickname': nickname })
 
-            // 更新本地缓存
-            const app = getApp()
-            if (app.globalData.userInfo) {
-              app.globalData.userInfo.nickname = res.content
-              wx.setStorageSync('userInfo', app.globalData.userInfo)
-            }
-
-            wx.showToast({ title: '修改成功', icon: 'success' })
-          } catch (err) {
-            console.error('修改昵称失败', err)
-          }
-        }
+      const app = getApp()
+      if (app.globalData.userInfo) {
+        app.globalData.userInfo.nickname = nickname
+        wx.setStorageSync('userInfo', app.globalData.userInfo)
       }
-    })
+    } catch (err) {
+      logger.error('修改昵称失败', { err: err.message || err })
+    }
+  },
+
+  // 头像选择回调
+  async onChooseAvatar(e) {
+    const tempFilePath = e.detail.avatarUrl
+    wx.showLoading({ title: '上传中...' })
+    try {
+      const openid = getApp().globalData.openid
+      const cloudPath = `avatars/${openid}/${Date.now()}.png`
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: tempFilePath
+      })
+
+      await callAPI('submitRecord', {
+        type: 'updateProfile',
+        avatar: uploadRes.fileID
+      })
+
+      this.setData({ 'userInfo.avatar': uploadRes.fileID })
+
+      const app = getApp()
+      if (app.globalData.userInfo) {
+        app.globalData.userInfo.avatar = uploadRes.fileID
+        wx.setStorageSync('userInfo', app.globalData.userInfo)
+      }
+
+      wx.hideLoading()
+      wx.showToast({ title: '头像已更新', icon: 'success' })
+    } catch (err) {
+      wx.hideLoading()
+      logger.error('上传头像失败', { err: err.message || err })
+      wx.showToast({ title: '上传失败', icon: 'none' })
+    }
   },
 
   // 保存所有设置
@@ -166,6 +195,7 @@ Page({
       })
       wx.showToast({ title: '设置已保存', icon: 'success' })
     } catch (err) {
+      logger.error('保存设置失败', { err: err.message || err })
       console.error('保存设置失败', err)
       wx.showToast({ title: '保存失败', icon: 'none' })
     } finally {
@@ -238,9 +268,11 @@ Page({
         fileSize: file.size
       })
 
+      logger.info('上传字体成功')
       wx.showToast({ title: '上传成功', icon: 'success' })
       this.loadFontList()
     } catch (err) {
+      logger.error('上传字体失败', { err: err.message || err })
       console.error('上传字体失败:', err)
       wx.showToast({ title: '上传失败', icon: 'none' })
     } finally {

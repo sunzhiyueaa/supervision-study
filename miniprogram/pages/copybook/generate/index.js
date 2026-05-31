@@ -1,6 +1,7 @@
 // pages/copybook/generate/index.js - 字帖生成
 // 使用 Canvas 2D API 实时渲染字帖，支持保存到相册和收藏
 const copybookService = require('../../../services/copybook')
+const logger = require('../../../utils/logger')
 
 // 解析练习字：阶段1-4用顿号分隔，阶段5为连续文本
 function parsePracticeChars(practiceChars) {
@@ -48,6 +49,10 @@ Page({
   a4Ctx: null,
   // 字体加载状态
   fontsLoaded: false,
+
+  onShow() {
+    logger.info('访问字帖生成页')
+  },
 
   onLoad(options) {
     this.dpr = wx.getWindowInfo().pixelRatio || 2
@@ -108,6 +113,7 @@ Page({
         const ctx = canvas.getContext('2d')
         this.canvas = canvas
         this.ctx = ctx
+        this.canvasCSSWidth = res[0].width
         this.setData({ canvasReady: true })
       })
   },
@@ -224,66 +230,37 @@ Page({
     wx.hideLoading()
   },
 
-  // 绘制字帖（核心方法）
+  // 绘制字帖（核心方法）— 先渲染 A4 画布，再缩放绘制到预览画布
   drawCopybook() {
-    const { text, gridType, practiceMode, sourceType } = this.data
+    const { text, sourceType } = this.data
     if (!text || !text.trim()) return
 
     const ctx = this.ctx
     const canvas = this.canvas
-    if (!ctx || !canvas) return
+    if (!ctx || !canvas || !this.a4Canvas) return
 
-    // 根据来源类型设置格子规格
-    let gridSize, columns, fixedRows
-    if (sourceType === 'course') {
-      // 课程模式：15mm×15mm，12字/行，固定15行
-      gridSize = 55
-      columns = 12
-      fixedRows = 15
-    } else {
-      // 每日素材模式：7.5mm×8.0mm，行间距1.5mm
-      gridSize = 28
-      columns = Math.floor((canvas.width / this.dpr - 40) / gridSize)
-      fixedRows = Math.floor((canvas.height / this.dpr - 40) / (gridSize + 6))
-    }
+    // 1. 先渲染到 A4 画布
+    this.drawA4Copybook()
 
-    const padding = 20
+    // 2. 将 A4 画布内容缩放绘制到预览画布
+    const A4_W = 2480
+    const A4_H = 3508
+    const previewW = this.canvasCSSWidth || 300
+    const previewH = Math.floor(previewW * A4_H / A4_W)
 
-    // 课程模式：额外空行需要额外高度
-    const extraRowHeight = (sourceType === 'course' && practiceMode === 'one-extra') ? gridSize : 0
-
-    // 设置 Canvas 尺寸（逻辑像素）
-    const canvasW = padding * 2 + columns * gridSize
-    const canvasH = padding * 2 + fixedRows * gridSize + (sourceType === 'daily' ? fixedRows * 6 : 0) + extraRowHeight
-
-    canvas.width = canvasW * this.dpr
-    canvas.height = canvasH * this.dpr
+    canvas.width = previewW * this.dpr
+    canvas.height = previewH * this.dpr
     ctx.scale(this.dpr, this.dpr)
 
-    // 清空画布
-    ctx.clearRect(0, 0, canvasW, canvasH)
+    ctx.clearRect(0, 0, previewW, previewH)
+    ctx.drawImage(this.a4Canvas, 0, 0, A4_W, A4_H, 0, 0, previewW, previewH)
 
-    // 绘制白色背景
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvasW, canvasH)
-
-    // 绘制格子和文字
-    if (sourceType === 'course') {
-      const chars = parsePracticeChars(text)
-      this.drawCourseGrid(ctx, padding, gridSize, columns, chars, practiceMode)
-    } else {
-      const chars = text.replace(/\s+/g, '').split('')
-      this.drawDailyGrid(ctx, padding, gridSize, columns, fixedRows, chars)
-    }
-
-    // 保存布局数据
+    // 3. 保存布局数据
     this.setData({
       layoutData: {
-        width: canvasW,
-        height: canvasH,
-        gridSize: gridSize,
-        rows: fixedRows,
-        columns: columns
+        width: A4_W,
+        height: A4_H,
+        sourceType: sourceType
       }
     })
   },
@@ -558,8 +535,7 @@ Page({
 
     // 居中偏移
     const totalW = columns * gridSize
-    const actualRows = Math.ceil(chars.length / columns)
-    const displayRows = sourceType === 'course' ? 15 : Math.min(actualRows, rows)
+    const displayRows = sourceType === 'course' ? 15 : rows
     const totalH = displayRows * (gridSize + rowGap)
     const offsetX = MARGIN + Math.floor((availW - totalW) / 2)
     const offsetY = MARGIN + Math.floor((availH - totalH) / 2)
@@ -600,8 +576,7 @@ Page({
 
     this.setData({ saving: true })
     try {
-      // 1. 绘制 A4 尺寸字帖并导出
-      this.drawA4Copybook()
+      // 1. 导出 A4 尺寸字帖
       const tempFilePath = await this.a4CanvasToTempFile()
       this.setData({ tempFilePath: tempFilePath })
 
@@ -636,9 +611,11 @@ Page({
         articleId: this.data.articleId
       })
 
+      logger.info('字帖保存成功')
       wx.showToast({ title: '已保存到相册', icon: 'success' })
     } catch (err) {
       console.error('保存失败:', err)
+      logger.error('字帖保存失败', { err: err.message || err })
       if (err.errMsg && err.errMsg.indexOf('auth deny') > -1) {
         wx.showModal({
           title: '需要授权',
@@ -727,6 +704,7 @@ Page({
       })
     }).catch(err => {
       console.error('预览失败:', err)
+      logger.error('预览失败', { err: err.message || err })
       wx.showToast({ title: '预览失败', icon: 'none' })
     })
   }
