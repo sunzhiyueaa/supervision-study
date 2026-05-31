@@ -1,11 +1,11 @@
 // config.js - 全局配置
 const envs = {
   dev: {
-    cloudEnv: 'cloud1-d9ggmhuqye1b0cb43',  // 开发环境
+    // cloudEnv: 'supervision-dev',  // 开发环境
     mode: 'dev',
   },
   prod: {
-    cloudEnv: 'supervision-prod',           // 生产环境
+    // cloudEnv: 'supervision-prod',           // 生产环境
     mode: 'prod',
   }
 }
